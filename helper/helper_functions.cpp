@@ -198,6 +198,9 @@ map<string, double> calculateMetrics(const tuple<int, int, int, int>& confusionM
     return metrics;
 }
 
+//forward declaration
+void printEvaluationResults(const map<string, double>& results, bool showPercentages = true);
+
 /**
  * Evaluate algorithm performance and generate ROC curve data.
  * 
@@ -210,10 +213,10 @@ map<string, double> calculateMetrics(const tuple<int, int, int, int>& confusionM
  */
 map<string, double> evaluateAlgorithm(
     const vector<double>& scores,
-    const vector<bool>& labels,  // Changed from double to bool
+    const vector<bool>& labels,
     const string& algorithm_name,
     const string& dataset_name,
-    double threshold = -1)
+    double threshold) 
 {
     // Validate inputs
     if (scores.size() != labels.size() || scores.empty()) {
@@ -253,6 +256,9 @@ map<string, double> evaluateAlgorithm(
     double auc = saveRocDataToCSV(scores, labels, algorithm_name, dataset_name);
     results["auc"] = auc;
     
+    // Automatically print evaluation results
+    printEvaluationResults(results);
+    
     return results;
 }
 
@@ -262,7 +268,7 @@ map<string, double> evaluateAlgorithm(
  * @param results Map of evaluation metrics
  * @param showPercentages Whether to show percentage values
  */
-void printEvaluationResults(const map<string, double>& results, bool showPercentages = true) 
+void printEvaluationResults(const map<string, double>& results, bool showPercentages) 
 {
     cout << "\n===== Algorithm Evaluation Results =====\n";
     

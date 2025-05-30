@@ -3,15 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import glob
+import sys
 
 # Set non-interactive backend to avoid display issues
 import matplotlib
 matplotlib.use('Agg')
 
-def plot_roc_curve():
-    """Find and plot ROC curves from CSV files in ROC_Data_Points directory."""
+def plot_roc_curve(output_dir=None):
+    """Find and plot ROC curves from CSV files in ROC_CSV directory.
+    
+    Args:
+        output_dir: Directory to save the plots to. If None, saves to current directory.
+    """
     # Find all ROC data files
-    data_dir = 'ROC_Data_Points'
+    data_dir = 'algorithms/ROC_CSV'  # Path relative to project root
     if not os.path.exists(data_dir):
         print(f"Directory {data_dir} not found")
         return
@@ -57,10 +62,15 @@ def plot_roc_curve():
             plt.title(f'ROC Curve - {algorithm} on {dataset}\nAUC = {auc:.4f}')
             plt.grid(True, alpha=0.3)
             
-            # Save plot
+            # Save plot to specified directory or current dir
             output_file = f"{algorithm}_{dataset}_roc.png"
-            plt.savefig(output_file, dpi=300)
-            print(f"ROC curve saved to {output_file}")
+            if output_dir:
+                output_path = os.path.join(output_dir, output_file)
+                plt.savefig(output_path, dpi=300)
+                print(f"ROC curve saved to {output_path}")
+            else:
+                plt.savefig(output_file, dpi=300)
+                print(f"ROC curve saved to {output_file}")
             
             plt.close()
             
@@ -68,4 +78,6 @@ def plot_roc_curve():
             print(f"Error processing {file}: {e}")
 
 if __name__ == "__main__":
-    plot_roc_curve()
+    # Check if output directory was provided as argument
+    output_dir = sys.argv[1] if len(sys.argv) > 1 else None
+    plot_roc_curve(output_dir)
