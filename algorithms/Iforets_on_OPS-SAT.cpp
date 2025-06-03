@@ -71,7 +71,7 @@ int main() { //example implementation
     // Calculate anomaly scores for all samples
     vector<double> scores;
     for (const auto& sample : allSamples) {
-        double score = forest.NormalizedScore(sample);
+        double score = 1.0 - forest.NormalizedScore(sample); //Library is wrong
         scores.push_back(score);
     }
     
