@@ -13,14 +13,13 @@ The configuration file defines parameters for ARM processor simulations organize
 | `mem_mode` | Memory access simulation mode | `"atomic"` (fastest, least accurate)<br>`"timing"` (balance of speed/accuracy)<br>`"detailed"` (most accurate) |
 | `clock_domain.clock` | CPU clock frequency | `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"` |
 | `clock_domain.voltage_domain.voltage` | CPU voltage | `"0.8V"` to `"1.2V"` |
-| `arch` | ARM architecture version | `"armv7"`, `"armv8"`, `"armv8.2"`, `"armv8.5"` |
 | `isa_checker` | Verify instruction execution | `true` (slower), `false` (faster) |
 
 ## CPU Parameters
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `type` | CPU model | `"ArmAtomicSimpleCPU"` (fast functional)<br>`"ArmTimingSimpleCPU"` (simple timing model)<br>`"ArmO3CPU"` (out-of-order)<br>`"ArmMinorCPU"` (in-order pipeline)<br>`"ArmHPI"` (high-performance in-order) |
+| `type` | CPU model | `"ArmAtomicSimpleCPU"` (fast functional)<br>`"ArmTimingSimpleCPU"` (simple timing model)<br>`"ArmO3CPU"` (out-of-order)<br>`"ArmMinorCPU"` (in-order pipeline) |
 | `num_cores` | Number of CPU cores | `1`, `2`, `4`, `8` |
 | `icache_size` | Instruction cache size | `"16kB"`, `"32kB"`, `"64kB"` |
 | `dcache_size` | Data cache size | `"16kB"`, `"32kB"`, `"64kB"` |
