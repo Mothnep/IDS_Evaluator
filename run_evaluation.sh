@@ -30,7 +30,7 @@ setup_python_venv() {
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to create virtual environment. Make sure python3-venv is installed:${NC}"
             echo -e "sudo apt-get update && sudo apt-get install -y python3-venv"
-            return 1
+            return 1 # Exit with error if venv creation fails
         fi
         
         # Activate the virtual environment and install required packages
@@ -38,11 +38,11 @@ setup_python_venv() {
         "$VENV_DIR/bin/pip" install pandas matplotlib
         if [ $? -ne 0 ]; then
             echo -e "${RED}Failed to install required packages${NC}"
-            return 1
+            return 1 # Exit with error if package installation fails
         fi
     fi
     
-    return 0
+    return 0 # Return success if venv exists or was created successfully
 }
 
 # Function to run Python script within the virtual environment
@@ -107,9 +107,9 @@ evaluate_algorithm() {
     # Compile the algorithm with specified libraries
     echo -e "${GREEN}Compiling algorithm with dependencies...${NC}"
     echo "$COMPILER $COMPILER_FLAGS $algo_file $lib_files -o $executable $include_paths"
-    $COMPILER $COMPILER_FLAGS $algo_file $lib_files -o "$executable" $include_paths
+    $COMPILER $COMPILER_FLAGS $algo_file $lib_files -o "$executable" $include_paths #echo for debugging
     
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then #If exit status of previous command != 0 (error) (-ne = not equal operator)
         echo -e "${RED}Compilation failed!${NC}"
         return 1
     fi
@@ -156,6 +156,8 @@ evaluate_algorithm() {
     return 0
 }
 
+# Main script execution starts here
+
 # Setup Python virtual environment first thing
 setup_python_venv
 if [ $? -ne 0 ]; then
@@ -163,11 +165,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check if this script is being sourced or executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then 
     # Script is being executed directly
     
-    # Check if an algorithm file was provided
-    if [ $# -eq 0 ]; then
+    # Check if at least one argument is provided
+    if [ $# -eq 0 ]; then # If no arguments, print usage example and exit
         echo "Usage: $0 <algorithm_file.cpp> [--lib library_path [--lib library_path] ...]"
         echo "Example: $0 Iforets_on_OPS-SAT.cpp --lib LibIsolationForest/cpp"
         echo "         $0 Iforets_on_OPS-SAT.cpp --lib lib/LibIsolationForest/cpp"
@@ -178,19 +180,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     shift # Remove algorithm file from arguments
     
     # If only filename is provided, assume it's in the algorithms directory
-    if [[ ! "$algorithm_file" == */* ]]; then
+    if [[ ! "$algorithm_file" == */* ]]; then #Check for slashes in the filename
         algorithm_file="$ALGORITHMS_DIR/$algorithm_file"
     fi
     
     # Validate the algorithm file exists
-    if [ ! -f "$algorithm_file" ]; then
+    if [ ! -f "$algorithm_file" ]; then #-f = file operator
         echo -e "${RED}Error: Algorithm file not found: $algorithm_file${NC}"
         exit 1
     fi
     
     # Parse remaining arguments for libraries
-    lib_paths=()
-    while [ $# -gt 0 ]; do
+    lib_paths=() # Array to hold library paths
+    while [ $# -gt 0 ]; do #While amount of arguments left is greater than 0
         if [ "$1" == "--lib" ] && [ $# -gt 1 ]; then
             # Handle path resolution with smart prefixing
             if [[ "$2" == /* ]]; then
