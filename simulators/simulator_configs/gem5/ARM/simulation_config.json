@@ -1,0 +1,49 @@
+{
+  "configurations": {
+
+    "default": {
+      "system": {
+        "mem_mode": "timing",
+        "clock_domain": {
+          "clock": "2GHz",
+          "voltage_domain": {
+            "voltage": "1.0V"
+          }
+        },
+        "arch": "armv8",
+        "isa_checker": false
+      },
+      "cpu": {
+        "type": "ArmTimingSimpleCPU",
+        "num_cores": 1,
+        "icache_size": "32kB",
+        "dcache_size": "32kB"
+      },
+      "memory": {
+        "controller": "MemCtrl",
+        "dram": {
+          "type": "DDR4_2400_8x8",
+          "ranks_per_channel": 1,
+          "channels": 1
+        },
+        "size": "2GB",
+        "mem_channels": 1
+      },
+      "cache_hierarchy": {
+        "l1i_size": "32kB",
+        "l1i_assoc": 2,
+        "l1d_size": "32kB",
+        "l1d_assoc": 2,
+        "l2_size": "1MB",
+        "l2_assoc": 8
+      },
+      "process": {
+        "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/algorithms/exe/iforest_arm",
+        "args": [],
+        "env": {},
+        "input": "",
+        "output": "output.txt"
+      }
+    }
+  }
+}
