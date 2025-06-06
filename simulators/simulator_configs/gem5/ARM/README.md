@@ -19,7 +19,7 @@ The configuration file defines parameters for ARM processor simulations organize
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `type` | CPU model | `"ArmAtomicSimpleCPU"` (fast functional)<br>`"ArmTimingSimpleCPU"` (simple timing model)<br>`"ArmO3CPU"` (out-of-order)<br>`"ArmMinorCPU"` (in-order pipeline) |
+| `type` | CPU model | `"AtomicSimpleCPU"` (fast functional)<br>`"TimingSimpleCPU"` (simple timing model)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
 | `num_cores` | Number of CPU cores | `1`, `2`, `4`, `8` |
 | `icache_size` | Instruction cache size | `"16kB"`, `"32kB"`, `"64kB"` |
 | `dcache_size` | Data cache size | `"16kB"`, `"32kB"`, `"64kB"` |
