@@ -78,7 +78,7 @@ def main():
         print(f"Unknown CPU type: {cpu_type}, defaulting to ArmTimingSimpleCPU")
         system.cpu = ArmTimingSimpleCPU()
     
-    # System interconnect
+    # System-wide memory bus
     system.membus = SystemXBar()
     
     # Connect CPU ports to memory bus
@@ -88,6 +88,7 @@ def main():
     # Set up interrupt controller
     system.cpu.createInterruptController()
     system.system_port = system.membus.cpu_side_ports
+    
     
     # Create memory controller
     system.mem_ctrl = MemCtrl()
@@ -100,6 +101,14 @@ def main():
         system.mem_ctrl.dram = DDR4_2400_8x8()
     elif dram_type == "DDR3_1600_8x8":
         system.mem_ctrl.dram = DDR3_1600_8x8()
+    elif dram_type == "DDR4_3200_8x8":
+        system.mem_ctrl.dram = DDR4_3200_8x8()
+    elif dram_type == "LPDDR3_1600_x32":
+        system.mem_ctrl.dram = LPDDR3_1600_x32()
+    elif dram_type == "HBM_1000_4H_1x64":
+        system.mem_ctrl.dram = HBM_1000_4H_1x64()
+    elif dram_type == "GDDR5_4000_x32":
+        system.mem_ctrl.dram = GDDR5_4000_x32()
     else:
         print(f"Unknown DRAM type: {dram_type}, defaulting to DDR4_2400_8x8")
         system.mem_ctrl.dram = DDR4_2400_8x8()
