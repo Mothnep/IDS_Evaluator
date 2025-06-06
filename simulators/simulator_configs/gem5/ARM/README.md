@@ -28,7 +28,6 @@ The configuration file defines parameters for ARM processor simulations organize
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `controller` | Memory controller type | `"MemCtrl"` (standard controller)<br>`"DRAMCtrl"` (detailed DRAM controller)<br>`"NVMCtrl"` (non-volatile memory)<br>`"HBMCtrl"` (high bandwidth memory)|
 | `dram.type` | DRAM technology | `"DDR3_1600_8x8"`, `"DDR3_2133_8x8"`, `"DDR4_2400_8x8"`, `"DDR4_3200_8x8"`, `"LPDDR3_1600_1x32"`, `"HBM_1000_4H_1x64"`, `"GDDR5_4000_x32"` |
 | `dram.ranks_per_channel` | DRAM ranks per channel | `1`, `2`, `4` |
 | `dram.channels` | Number of DRAM channels | `1`, `2`, `4`, `8` |
