@@ -54,6 +54,9 @@ def main():
     # Create CPU(s) based on num_cores
     system.cpu = [None] * num_cores
     
+    # Check if branch predictor configuration exists
+    has_bp_config = "branch_predictor" in cpu_config
+    
     # Create and connect CPUs
     for i in range(num_cores):
         # Select CPU class based on type (remove "Arm" prefix from JSON config names)
@@ -63,10 +66,78 @@ def main():
             system.cpu[i] = AtomicSimpleCPU()
         elif cpu_type == "ArmO3CPU":
             system.cpu[i] = DerivO3CPU()
+            
+            # Configure branch predictor for O3CPU if specified
+            if has_bp_config:
+                bp_config = cpu_config["branch_predictor"]
+                bp_type = bp_config.get("type", "TournamentBP")
+                
+                if bp_type == "LocalBP":
+                    system.cpu[i].branchPred = LocalBP()
+                elif bp_type == "TournamentBP":
+                    system.cpu[i].branchPred = TournamentBP()
+                elif bp_type == "BiModeBP":
+                    system.cpu[i].branchPred = BiModeBP()
+                elif bp_type == "LTAGE":
+                    system.cpu[i].branchPred = LTAGE()
+                else:
+                    print(f"Warning: Unknown branch predictor type: {bp_type}, using TournamentBP")
+                    system.cpu[i].branchPred = TournamentBP()
+                
+                # Apply any BP-specific parameters
+                for param, value in bp_config.items():
+                    if param != "type" and hasattr(system.cpu[i].branchPred, param):
+                        setattr(system.cpu[i].branchPred, param, value)
+                        
         elif cpu_type == "ArmMinorCPU":
             system.cpu[i] = MinorCPU()
+            
+            # Configure branch predictor for MinorCPU if specified
+            if has_bp_config:
+                bp_config = cpu_config["branch_predictor"]
+                bp_type = bp_config.get("type", "TournamentBP")
+                
+                if bp_type == "LocalBP":
+                    system.cpu[i].branchPred = LocalBP()
+                elif bp_type == "TournamentBP":
+                    system.cpu[i].branchPred = TournamentBP()
+                elif bp_type == "BiModeBP":
+                    system.cpu[i].branchPred = BiModeBP()
+                elif bp_type == "LTAGE":
+                    system.cpu[i].branchPred = LTAGE()
+                else:
+                    print(f"Warning: Unknown branch predictor type: {bp_type}, using TournamentBP")
+                    system.cpu[i].branchPred = TournamentBP()
+                
+                # Apply any BP-specific parameters
+                for param, value in bp_config.items():
+                    if param != "type" and hasattr(system.cpu[i].branchPred, param):
+                        setattr(system.cpu[i].branchPred, param, value)
+                        
         elif cpu_type == "ArmHPI":
-            system.cpu[i] = HPI.HPI()  # Special case for HPI
+            system.cpu[i] = HPI.HPI()
+    
+            # HPI is based on MinorCPU, so it supports branch prediction
+            if has_bp_config:
+                bp_config = cpu_config["branch_predictor"]
+                bp_type = bp_config.get("type", "TournamentBP")
+                
+                if bp_type == "LocalBP":
+                    system.cpu[i].branchPred = LocalBP()
+                elif bp_type == "TournamentBP":
+                    system.cpu[i].branchPred = TournamentBP()
+                elif bp_type == "BiModeBP":
+                    system.cpu[i].branchPred = BiModeBP()
+                elif bp_type == "LTAGE":
+                    system.cpu[i].branchPred = LTAGE()
+                else:
+                    print(f"Warning: Unknown branch predictor type: {bp_type}, using TournamentBP")
+                    system.cpu[i].branchPred = TournamentBP()
+                
+                # Apply BP-specific parameters
+                for param, value in bp_config.items():
+                    if param != "type" and hasattr(system.cpu[i].branchPred, param):
+                        setattr(system.cpu[i].branchPred, param, value)
         else:
             print(f"Unknown CPU type: {cpu_type}")
             sys.exit(1)
