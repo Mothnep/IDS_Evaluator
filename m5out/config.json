@@ -76,8 +76,8 @@
             }
         },
         "cpu": {
-            "type": "BaseAtomicSimpleCPU",
-            "cxx_class": "gem5::AtomicSimpleCPU",
+            "type": "BaseTimingSimpleCPU",
+            "cxx_class": "gem5::TimingSimpleCPU",
             "name": "cpu",
             "path": "system.cpu",
             "branchPred": null,
@@ -462,8 +462,6 @@
             "progress_interval": 0,
             "pwr_gating_latency": 300,
             "simpoint_start_insts": [],
-            "simulate_data_stalls": false,
-            "simulate_inst_stalls": false,
             "socket_id": 0,
             "switched_out": false,
             "syscallRetryLatency": 10000,
@@ -482,7 +480,6 @@
                 },
                 "eventq_index": 0
             },
-            "width": 1,
             "workload": [
                 {
                     "type": "Process",

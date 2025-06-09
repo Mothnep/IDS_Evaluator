@@ -26,7 +26,7 @@ def load_config(config_file, config_name="default"):
     
     return config["configurations"][config_name]
 
-# Parse arguments - similar to arm_script.py
+# Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, default="simulation_config.json", 
                     help="Configuration file")
@@ -34,23 +34,22 @@ parser.add_argument("--config-name", type=str, default="default",
                     help="Name of the configuration to use")
 args = parser.parse_args()
 
-# Load the full configuration - similar to arm_script.py
+# Load configuration 
 config_path = os.path.join(os.path.dirname(__file__), args.config)
-try:
-    # Extract the full configuration
-    config = load_config(config_path, args.config_name)
-    print(f"Loaded configuration: {config_path}, using profile: {args.config_name}")
-    
-    # Extract CPU type from config
-    cpu_type = config["cpu"]["type"]
-    print(f"Using CPU type from config: {cpu_type}")
-except Exception as e:
-    print(f"Error loading configuration: {e}. Using default CPU type.")
-    cpu_type = "ArmTimingSimpleCPU"
-    config = {}
 
-#This whole file provides the hardware simulation which will run our application defined elsewhere
-#These processes work using SimObjects, which are the basic building blocks of gem5
+# Extract full configuration
+config = load_config(config_path, args.config_name)
+print(f"Loaded configuration: {config_path}, using profile: {args.config_name}")
+    
+# Extract CPU type from config
+cpu_type = config["cpu"]["type"]
+print(f"Using CPU type from config: {cpu_type}")
+    
+# Extract binary path from config
+binary = config["process"]["binary"]
+print(f"Using binary from config: {binary}")
+
+
 system = System()
 
 system.clk_domain = SrcClockDomain()
@@ -65,8 +64,8 @@ if cpu_type == "TimingSimpleCPU":
     system.cpu = ArmTimingSimpleCPU()
 elif cpu_type == "AtomicSimpleCPU":
     system.cpu = ArmAtomicSimpleCPU()
-elif cpu_type == "O3CPU" or cpu_type == "DerivO3CPU":
-    system.cpu = ArmDerivO3CPU()
+elif cpu_type == "O3CPU":
+    system.cpu = ArmO3CPU()
 elif cpu_type == "MinorCPU":
     system.cpu = ArmMinorCPU()
 else:
@@ -87,10 +86,8 @@ system.mem_ctrl.dram = DDR3_1600_8x8()
 system.mem_ctrl.dram.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.mem_side_ports
 
-# Create a process and assign it to the CPU
-binary = '/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello'
 
-# for gem5 V21 and beyond
+# Create a process and assign it to the CPU
 system.workload = SEWorkload.init_compatible(binary)
 
 process = Process()

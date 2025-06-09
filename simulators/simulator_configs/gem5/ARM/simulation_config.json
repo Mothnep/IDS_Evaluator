@@ -14,7 +14,7 @@
         "isa_checker": false
       },
       "cpu": {
-        "type": "AtomicSimpleCPU",
+        "type": "TimingSimpleCPU",
         "num_cores": 1,
         "icache_size": "32kB",
         "dcache_size": "32kB"
