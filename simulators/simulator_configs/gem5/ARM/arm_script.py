@@ -4,7 +4,7 @@ from m5.util import addToPath
 import argparse
 import json
 import os
-import sys
+
 
 # Add gem5 configs to path
 addToPath('/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/configs')
@@ -115,8 +115,40 @@ def main():
     
     system.mem_ctrl.dram.range = system.mem_ranges[0]
     system.mem_ctrl.port = system.membus.mem_side_ports
+
+
+
     
-    print("System configuration complete")
+    # Create a process for the CPU
+    binary = config["process"]["binary"]
+    
+    # Create the workload
+    system.workload = SEWorkload.init_compatible(binary)
+    
+    # Create a process
+    process = Process()
+    process.cmd = [binary]
+
+    if "output" in config["process"]:
+        process.output = config["process"]["output"]
+    
+    # Set the process for our CPU to execute
+    system.cpu.workload = process
+    system.cpu.createThreads()
+    
+    # Set up the root SimObject and start the simulation
+    root = Root(full_system=False, system=system)
+    
+    # Instantiate all of the objects we've created
+    m5.instantiate()
+    
+    print("Beginning simulation!")
+    exit_event = m5.simulate()
+    
+    print('Exiting @ tick {} because {}'.format(
+        m5.curTick(), exit_event.getCause()))
+    
+    
 
 if __name__ == "__main__":
     main()
