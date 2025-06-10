@@ -51,7 +51,11 @@ print(f"Using clock frequency from config: {clock_freq}")
 #Extract voltage from config
 voltage = config["system"]["clock_domain"]["voltage_domain"]["voltage"]
 print(f"Using voltage from config: {voltage}")
-    
+
+# Extract memory size from config
+mem_size = config["memory"]["size"]
+print(f"Using memory size from config: {mem_size}")
+
 # Extract CPU type from config
 cpu_type = config["cpu"]["type"]
 print(f"Using CPU type from config: {cpu_type}")
@@ -68,18 +72,26 @@ print(f"Using binary from config: {binary}")
 # Initialize system and basic parameters
 system = System()
 
+# Set clock domain and voltage domain
 system.clk_domain = SrcClockDomain()
 system.clk_domain.clock = clock_freq
 system.clk_domain.voltage_domain = VoltageDomain()
 system.clk_domain.voltage_domain.voltage = voltage
 
+# Set memory mode 
 if mem_mode == 'timing':
     system.mem_mode = 'timing'
 elif mem_mode == 'atomic':
     system.mem_mode = 'atomic'
-system.mem_ranges = [AddrRange('512MB')]
+elif mem_mode == 'functional':
+    system.mem_mode = 'functional'
+else:
+    raise ValueError(f"Unsupported memory mode: {mem_mode}")
 
-# First create the CPU vector properly (can't be empty)
+# Set memory ranges 
+system.mem_ranges = [AddrRange(mem_size)]
+
+# Create the CPU vector properly (can't be empty)
 system.cpu = [ArmTimingSimpleCPU(cpu_id=i) for i in range(num_cores)] 
 
 # Then configure each CPU based on type if needed
