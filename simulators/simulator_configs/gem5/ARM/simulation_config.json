@@ -15,7 +15,7 @@
       },
       "cpu": {
         "type": "TimingSimpleCPU",
-        "num_cores": 1,
+        "num_cores": 2,
         "icache_size": "32kB",
         "dcache_size": "32kB"
       },

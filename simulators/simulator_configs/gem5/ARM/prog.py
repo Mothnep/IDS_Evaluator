@@ -44,12 +44,17 @@ print(f"Loaded configuration: {config_path}, using profile: {args.config_name}")
 # Extract CPU type from config
 cpu_type = config["cpu"]["type"]
 print(f"Using CPU type from config: {cpu_type}")
+
+# Extract number of cores from config
+num_cores = config["cpu"]["num_cores"]
+print(f"Using {num_cores} core(s) from config")
     
 # Extract binary path from config
 binary = config["process"]["binary"]
 print(f"Using binary from config: {binary}")
 
 
+# Initialize system and basic parameters
 system = System()
 
 system.clk_domain = SrcClockDomain()
@@ -59,26 +64,27 @@ system.clk_domain.voltage_domain = VoltageDomain()
 system.mem_mode = 'timing'
 system.mem_ranges = [AddrRange('512MB')]
 
-# Only use the CPU type from the loaded config
-if cpu_type == "TimingSimpleCPU":
-    system.cpu = ArmTimingSimpleCPU()
-elif cpu_type == "AtomicSimpleCPU":
-    system.cpu = ArmAtomicSimpleCPU()
-elif cpu_type == "O3CPU":
-    system.cpu = ArmO3CPU()
-elif cpu_type == "MinorCPU":
-    system.cpu = ArmMinorCPU()
-else:
-    # Default to ArmTimingSimpleCPU for any other value
-    system.cpu = ArmTimingSimpleCPU()
-    
+# First create the CPU vector properly (can't be empty)
+system.cpu = [ArmTimingSimpleCPU(cpu_id=i) for i in range(num_cores)] 
+
+# Then configure each CPU based on type if needed
+for i in range(num_cores):
+    if cpu_type != "TimingSimpleCPU":
+        if cpu_type == "AtomicSimpleCPU":
+            system.cpu[i] = ArmAtomicSimpleCPU(cpu_id=i)
+        elif cpu_type == "O3CPU":
+            system.cpu[i] = ArmO3CPU(cpu_id=i)
+        elif cpu_type == "MinorCPU":
+            system.cpu[i] = ArmMinorCPU(cpu_id=i)
+
 system.membus = SystemXBar()
 
-system.cpu.icache_port = system.membus.cpu_side_ports
-system.cpu.dcache_port = system.membus.cpu_side_ports
+# Connect each CPU's cache ports to the membus
+for cpu in system.cpu:
+    cpu.icache_port = system.membus.cpu_side_ports
+    cpu.dcache_port = system.membus.cpu_side_ports
+    cpu.createInterruptController()
 
-
-system.cpu.createInterruptController()
 system.system_port = system.membus.cpu_side_ports # Requeston on left, response on right
 
 system.mem_ctrl = MemCtrl()
@@ -92,8 +98,11 @@ system.workload = SEWorkload.init_compatible(binary)
 
 process = Process()
 process.cmd = [binary]
-system.cpu.workload = process
-system.cpu.createThreads()
+
+# Assign the process to each CPU and create threads
+for cpu in system.cpu:
+    cpu.workload = process
+    cpu.createThreads()
 
 #Instantiate system and begin execution
 root = Root(full_system = False, system = system)
@@ -104,5 +113,10 @@ exit_event = m5.simulate()
 
 print('Exiting @ tick {} because {}'
       .format(m5.curTick(), exit_event.getCause()))
+
+# Verify CPU 
+print(f"Actual CPU count: {len(system.cpu)}")
+print(f"CPU IDs: {[cpu.cpu_id for cpu in system.cpu]}")
+
 
 
