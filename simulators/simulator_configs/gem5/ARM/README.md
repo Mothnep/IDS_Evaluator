@@ -10,9 +10,9 @@ The configuration file defines parameters for ARM processor simulations organize
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `mem_mode` | Memory access simulation mode<br>(Needs to fit CPU type) | `"atomic"` (fastest, least accurate)<br>`"timing"` (balance of speed/accuracy)<br>`"detailed"` (most accurate) |
-| `clock_domain.clock` | CPU clock frequency | `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"` |
-| `clock_domain.voltage_domain.voltage` | CPU voltage | `"0.8V"` to `"1.2V"` |
+| `mem_mode` | Memory access simulation mode<br>(Needs to fit CPU type) | `"atomic"` (warming up)<br>`"timing"` (only suitable for simulations)<br>`"functional"` (debugging mode) |
+| `clock_domain.clock` | CPU clock frequency | Correct Syntax: `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"`, etc... |
+| `clock_domain.voltage_domain.voltage` | CPU voltage | Correct Sytax: `"0.8V"`, `"1.2V"`, etc... |
 | `isa_checker` | Verify instruction execution | `true` (slower), `false` (faster) |
 
 ## CPU Parameters
@@ -20,9 +20,9 @@ The configuration file defines parameters for ARM processor simulations organize
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
 | `type` | CPU model | `"AtomicSimpleCPU"` (fast functional)<br>`"TimingSimpleCPU"` (simple timing model)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
-| `num_cores` | Number of CPU cores | `1`, `2`, `4`, `8` |
-| `icache_size` | Instruction cache size | `"16kB"`, `"32kB"`, `"64kB"` |
-| `dcache_size` | Data cache size | `"16kB"`, `"32kB"`, `"64kB"` |
+| `num_cores` | Number of CPU cores | Correct Syntax: `1`, `2`, `4`, `8`, etc... |
+| `icache_size` | Instruction cache size | Correct Syntax: `"16kB"`, `"32kB"`, `"64kB"`, etc... |
+| `dcache_size` | Data cache size | Correct Syntax:  `"16kB"`, `"32kB"`, `"64kB"`, etc... |
 
 ## Memory Parameters
 
