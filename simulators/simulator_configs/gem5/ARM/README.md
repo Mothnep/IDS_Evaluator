@@ -10,7 +10,7 @@ The configuration file defines parameters for ARM processor simulations organize
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `mem_mode` | Memory access simulation mode | `"atomic"` (fastest, least accurate)<br>`"timing"` (balance of speed/accuracy)<br>`"detailed"` (most accurate) |
+| `mem_mode` | Memory access simulation mode<br>(Needs to fit CPU type) | `"atomic"` (fastest, least accurate)<br>`"timing"` (balance of speed/accuracy)<br>`"detailed"` (most accurate) |
 | `clock_domain.clock` | CPU clock frequency | `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"` |
 | `clock_domain.voltage_domain.voltage` | CPU voltage | `"0.8V"` to `"1.2V"` |
 | `isa_checker` | Verify instruction execution | `true` (slower), `false` (faster) |

@@ -40,6 +40,17 @@ config_path = os.path.join(os.path.dirname(__file__), args.config)
 # Extract full configuration
 config = load_config(config_path, args.config_name)
 print(f"Loaded configuration: {config_path}, using profile: {args.config_name}")
+
+#Extract memory mode from config
+mem_mode = config["system"]["mem_mode"]
+
+# Extract clock frequency from config
+clock_freq = config["system"]["clock_domain"]["clock"]
+print(f"Using clock frequency from config: {clock_freq}")
+
+#Extract voltage from config
+voltage = config["system"]["clock_domain"]["voltage_domain"]["voltage"]
+print(f"Using voltage from config: {voltage}")
     
 # Extract CPU type from config
 cpu_type = config["cpu"]["type"]
@@ -58,10 +69,14 @@ print(f"Using binary from config: {binary}")
 system = System()
 
 system.clk_domain = SrcClockDomain()
-system.clk_domain.clock = '1GHz'
+system.clk_domain.clock = clock_freq
 system.clk_domain.voltage_domain = VoltageDomain()
+system.clk_domain.voltage_domain.voltage = voltage
 
-system.mem_mode = 'timing'
+if mem_mode == 'timing':
+    system.mem_mode = 'timing'
+elif mem_mode == 'atomic':
+    system.mem_mode = 'atomic'
 system.mem_ranges = [AddrRange('512MB')]
 
 # First create the CPU vector properly (can't be empty)
@@ -85,7 +100,7 @@ for cpu in system.cpu:
     cpu.dcache_port = system.membus.cpu_side_ports
     cpu.createInterruptController()
 
-system.system_port = system.membus.cpu_side_ports # Requeston on left, response on right
+system.system_port = system.membus.cpu_side_ports # Request on on left, response on right
 
 system.mem_ctrl = MemCtrl()
 system.mem_ctrl.dram = DDR3_1600_8x8()
