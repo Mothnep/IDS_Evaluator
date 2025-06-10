@@ -20,14 +20,14 @@
         "dcache_size": "32kB"
       },
       "memory": {
-        "controller": "MemCtrl",
+        "override_gem5_data": false,
         "dram": {
-          "type": "DDR4_2400_8x8",
-          "ranks_per_channel": 1,
-          "channels": 1
-        },
-        "size": "2GB",
-        "mem_channels": 1
+          "type": "DDR3_1600_8x8",
+          "ranks_per_channel": 2,
+          "channels": 2,
+          "size": "2GB"
+        }
+        
       },
       "cache_hierarchy": {
         "l1i_size": "32kB",

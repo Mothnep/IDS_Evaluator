@@ -29,9 +29,8 @@ The configuration file defines parameters for ARM processor simulations organize
 |-----------|-------------|-------------------|
 | `dram.type` | DRAM technology | `"DDR3_1600_8x8"`, `"DDR3_2133_8x8"`, `"DDR4_2400_16x4"`, `"DDR4_2400_8x8"`, `"DDR4_2400_4x16"`, `"DDR5_4400_4x8"`, `"DDR5_6400_4x8"`, `"DDR5_4800_4x8"`, `"HBM_1000_4H_1x128"`, `"HBM_1000_4H_1x64"`, `"HBM_2000_4H_1x64"`, `"HMC_2500_1x32"`, `"GDDR5_4000_2x32"`, `"LPDDR2_S4_1066_1x32"`, `"LPDDR3_1600_1x32"`, `"LPDDR5_5500_1x16_BG_BL32"`, `"LPDDR5_5500_1x16_BG_BL16"`, `"LPDDR5_5500_1x16_8B_BL32"`, `"LPDDR5_6400_1x16_BG_BL32"`, `"LPDDR5_6400_1x16_BG_BL16"`, `"LPDDR5_6400_1x16_8B_BL32"`, |
 | `dram.ranks_per_channel` | DRAM ranks per channel | `1`, `2`, `4` |
-| `dram.channels` | Number of DRAM channels | `1`, `2`, `4`, `8` |
-| `size` | Total system memory | `"512MB"`, `"1GB"`, `"2GB"`, `"4GB"`, `"8GB"` |
-| `mem_channels` | Memory channels | `1`, `2`, `4`, `8` |
+| `dram.channels` | Number of DRAM channels (not operational for now) | `1`, `2`, `4`, `8` |
+| `size` | Single Dram size | `"512MB"`, `"1GB"`, `"2GB"`, `"4GB"`, `"8GB"` |
 
 ## Cache Hierarchy
 

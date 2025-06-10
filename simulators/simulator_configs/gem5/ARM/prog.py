@@ -63,6 +63,10 @@ print(f"Using CPU type from config: {cpu_type}")
 # Extract number of cores from config
 num_cores = config["cpu"]["num_cores"]
 print(f"Using {num_cores} core(s) from config")
+
+# Extract DRAM type
+dram_type = config["memory"]["dram"]["type"]
+print(f"Using DRAM type from config: {dram_type}")
     
 # Extract binary path from config
 binary = config["process"]["binary"]
@@ -89,7 +93,7 @@ else:
     raise ValueError(f"Unsupported memory mode: {mem_mode}")
 
 # Set memory ranges 
-system.mem_ranges = [AddrRange(mem_size)]
+#system.mem_ranges = [AddrRange(mem_size)]
 
 # Create the CPU vector properly (can't be empty)
 system.cpu = [ArmTimingSimpleCPU(cpu_id=i) for i in range(num_cores)] 
@@ -114,8 +118,39 @@ for cpu in system.cpu:
 
 system.system_port = system.membus.cpu_side_ports # Request on on left, response on right
 
+# Memory controller setup (needs to be in a loop if wanting to increase number of dram channels)
 system.mem_ctrl = MemCtrl()
-system.mem_ctrl.dram = DDR3_1600_8x8()
+# Create the DRAM object dynamically
+system.mem_ctrl.dram = eval(dram_type)()
+
+# If the DRAM model has a device size 
+if hasattr(system.mem_ctrl.dram, 'device_size'):
+    # If the user does not want to override the DRAM device size, use the model's size
+    if not config["memory"]["override_gem5_data"]:
+        system.mem_ranges = [AddrRange(system.mem_ctrl.dram.device_size)]
+        print(f"Using DRAM device size from model: {system.mem_ctrl.dram.device_size}")
+    else:
+        # If the user wants to override the DRAM device size, use the config size
+        system.mem_ranges = [AddrRange(config["memory"]["dram"]["size"])]
+        print(f"Using DRAM device size from config: {config['memory']['size']}")
+else:
+    # If the DRAM model does not have a device size, use the config size
+    system.mem_ranges = [AddrRange(config["memory"]["dram"]["size"])]
+    print(f"Using DRAM device size from config: {config['memory']["dram"]['size']}")
+
+
+# Checking if Dram model has ranks per channel defined
+if hasattr(system.mem_ctrl.dram, 'ranks_per_channel'):
+    if config["memory"]["override_gem5_data"]:
+        ranks = config["memory"]["dram"].get("ranks_per_channel", 1) #sets to 1 if not specified
+        system.mem_ctrl.dram.ranks_per_channel = ranks
+        print(f"Setting DRAM ranks_per_channel to {ranks} from config")
+    else:
+        # Use the default value from the DRAM model
+        ranks = system.mem_ctrl.dram.ranks_per_channel
+        print(f"Using default DRAM ranks_per_channel from device: {ranks}")
+    
+
 system.mem_ctrl.dram.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.mem_side_ports
 

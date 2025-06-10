@@ -22,7 +22,7 @@
         "m5ops_base": 0,
         "mem_mode": "timing",
         "mem_ranges": [
-            "0:2147483648"
+            "0:536870912"
         ],
         "memories": [
             "system.mem_ctrl.dram"
@@ -1029,7 +1029,7 @@
                     "leaders": [],
                     "possible_states": []
                 },
-                "range": "0:2147483648",
+                "range": "0:536870912",
                 "ranks_per_channel": 2,
                 "read_buffer_size": 32,
                 "tAAD": 1250,
