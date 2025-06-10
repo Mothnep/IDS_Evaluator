@@ -13,13 +13,12 @@ The configuration file defines parameters for ARM processor simulations organize
 | `mem_mode` | Memory access simulation mode<br>(Needs to fit CPU type) | `"atomic"` (warming up)<br>`"timing"` (only suitable for simulations)<br>`"functional"` (debugging mode) |
 | `clock_domain.clock` | CPU clock frequency | Correct Syntax: `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"`, etc... |
 | `clock_domain.voltage_domain.voltage` | CPU voltage | Correct Sytax: `"0.8V"`, `"1.2V"`, etc... |
-| `isa_checker` | Verify instruction execution | `true` (slower), `false` (faster) |
 
 ## CPU Parameters
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `type` | CPU model | `"AtomicSimpleCPU"` (fast functional)<br>`"TimingSimpleCPU"` (simple timing model)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
+| `type` | CPU model | `"AtomicSimpleCPU"` (Requests instantly finished)<br>`"TimingSimpleCPU"` (Memory access but no pipelining)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
 | `num_cores` | Number of CPU cores | Correct Syntax: `1`, `2`, `4`, `8`, etc... |
 | `icache_size` | Instruction cache size | Correct Syntax: `"16kB"`, `"32kB"`, `"64kB"`, etc... |
 | `dcache_size` | Data cache size | Correct Syntax:  `"16kB"`, `"32kB"`, `"64kB"`, etc... |
