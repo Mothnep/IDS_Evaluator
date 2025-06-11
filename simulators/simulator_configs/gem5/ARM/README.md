@@ -49,9 +49,7 @@ The configuration file defines parameters for ARM processor simulations organize
 |-----------|-------------|---------|
 | `binary` | Path to ARM executable | Cross-compiled binary to execute |
 | `args` | Command line arguments | Arguments passed to the binary |
-| `env` | Environment variables | Key-value pairs for environment settings |
-| `input` | Input redirection file | File to use as standard input |
-| `output` | Output redirection file | File to capture standard output |
+
 
 ## Default Configuration
 
