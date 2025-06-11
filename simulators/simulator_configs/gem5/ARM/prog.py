@@ -3,6 +3,7 @@ from m5.objects import *
 import argparse
 import json
 import os
+from m5.util import convert
 
 def load_config(config_file, config_name="default"):
     """Load configuration from JSON file
@@ -39,38 +40,54 @@ config_path = os.path.join(os.path.dirname(__file__), args.config)
 
 # Extract full configuration
 config = load_config(config_path, args.config_name)
-print(f"Loaded configuration: {config_path}, using profile: {args.config_name}")
 
 #Extract memory mode from config
 mem_mode = config["system"]["mem_mode"]
 
 # Extract clock frequency from config
 clock_freq = config["system"]["clock_domain"]["clock"]
-print(f"Using clock frequency from config: {clock_freq}")
 
 #Extract voltage from config
 voltage = config["system"]["clock_domain"]["voltage_domain"]["voltage"]
-print(f"Using voltage from config: {voltage}")
 
 # Extract memory size from config
-mem_size = config["memory"]["size"]
-print(f"Using memory size from config: {mem_size}")
+mem_size = config["memory"]["dram"]["size"]
 
 # Extract CPU type from config
 cpu_type = config["cpu"]["type"]
-print(f"Using CPU type from config: {cpu_type}")
 
 # Extract number of cores from config
 num_cores = config["cpu"]["num_cores"]
-print(f"Using {num_cores} core(s) from config")
 
 # Extract DRAM type
 dram_type = config["memory"]["dram"]["type"]
-print(f"Using DRAM type from config: {dram_type}")
     
 # Extract binary path from config
 binary = config["process"]["binary"]
-print(f"Using binary from config: {binary}")
+
+def print_config(config_path, mem_mode, clock_freq, voltage, mem_size, cpu_type, num_cores, dram_type, binary):
+    print(f"Configuration file: {config_path}")
+    print(f"Memory mode: {mem_mode}")
+    print(f"Clock frequency: {clock_freq}")
+    print(f"Voltage: {voltage}")
+    print(f"Memory size: {mem_size}")
+    print(f"CPU type: {cpu_type}")
+    print(f"Number of cores: {num_cores}")
+    print(f"DRAM type: {dram_type}")
+    print(f"Binary: {binary}")
+    print(f"Actual CPU count: {len(system.cpu)}")
+    print(f"CPU IDs: {[cpu.cpu_id for cpu in system.cpu]}")
+
+def set_dram_size(dram_obj):
+    # For MemorySize objects
+    if hasattr(dram_obj.device_size, "value"):
+        # Value given in Bytes,convert to MiB 
+        size_dram_MiB = dram_obj.device_size.value / 1024 / 1024
+        nb_devices_rank = dram_obj.devices_per_rank
+        nb_ranks_channel = dram_obj.ranks_per_channel
+        total_size = size_dram_MiB * nb_devices_rank * nb_ranks_channel
+        print(f"Total DRAM size: {total_size} MiB")
+        system.mem_ranges = [AddrRange(str(int(total_size)) + "MiB")]
 
 
 # Initialize system and basic parameters
@@ -123,37 +140,10 @@ system.mem_ctrl = MemCtrl()
 # Create the DRAM object dynamically
 system.mem_ctrl.dram = eval(dram_type)()
 
-# If the DRAM model has a device size 
-if hasattr(system.mem_ctrl.dram, 'device_size'):
-    # If the user does not want to override the DRAM device size, use the model's size
-    if not config["memory"]["override_gem5_data"]:
-        system.mem_ranges = [AddrRange(system.mem_ctrl.dram.device_size)]
-        print(f"Using DRAM device size from model: {system.mem_ctrl.dram.device_size}")
-    else:
-        # If the user wants to override the DRAM device size, use the config size
-        system.mem_ranges = [AddrRange(config["memory"]["dram"]["size"])]
-        print(f"Using DRAM device size from config: {config['memory']['size']}")
-else:
-    # If the DRAM model does not have a device size, use the config size
-    system.mem_ranges = [AddrRange(config["memory"]["dram"]["size"])]
-    print(f"Using DRAM device size from config: {config['memory']["dram"]['size']}")
-
-
-# Checking if Dram model has ranks per channel defined
-if hasattr(system.mem_ctrl.dram, 'ranks_per_channel'):
-    if config["memory"]["override_gem5_data"]:
-        ranks = config["memory"]["dram"].get("ranks_per_channel", 1) #sets to 1 if not specified
-        system.mem_ctrl.dram.ranks_per_channel = ranks
-        print(f"Setting DRAM ranks_per_channel to {ranks} from config")
-    else:
-        # Use the default value from the DRAM model
-        ranks = system.mem_ctrl.dram.ranks_per_channel
-        print(f"Using default DRAM ranks_per_channel from device: {ranks}")
-    
-
+# Set the DRAM complete size and range
+set_dram_size(system.mem_ctrl.dram)
 system.mem_ctrl.dram.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.mem_side_ports
-
 
 # Create a process and assign it to the CPU
 system.workload = SEWorkload.init_compatible(binary)
@@ -176,9 +166,7 @@ exit_event = m5.simulate()
 print('Exiting @ tick {} because {}'
       .format(m5.curTick(), exit_event.getCause()))
 
-# Verify CPU 
-print(f"Actual CPU count: {len(system.cpu)}")
-print(f"CPU IDs: {[cpu.cpu_id for cpu in system.cpu]}")
+
 
 
 
