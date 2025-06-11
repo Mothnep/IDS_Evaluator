@@ -86,8 +86,8 @@ def set_dram_size(dram_obj):
         nb_devices_rank = dram_obj.devices_per_rank
         nb_ranks_channel = dram_obj.ranks_per_channel
         total_size = size_dram_MiB * nb_devices_rank * nb_ranks_channel
-        print(f"Total DRAM size: {total_size} MiB")
         system.mem_ranges = [AddrRange(str(int(total_size)) + "MiB")]
+        #print(f"Total DRAM size: {total_size} MiB")
 
 
 # Initialize system and basic parameters
@@ -109,12 +109,9 @@ elif mem_mode == 'functional':
 else:
     raise ValueError(f"Unsupported memory mode: {mem_mode}")
 
-# Set memory ranges 
-#system.mem_ranges = [AddrRange(mem_size)]
 
 # Create the CPU vector properly (can't be empty)
 system.cpu = [ArmTimingSimpleCPU(cpu_id=i) for i in range(num_cores)] 
-
 # Then configure each CPU based on type if needed
 for i in range(num_cores):
     if cpu_type != "TimingSimpleCPU":
@@ -125,8 +122,8 @@ for i in range(num_cores):
         elif cpu_type == "MinorCPU":
             system.cpu[i] = ArmMinorCPU(cpu_id=i)
 
-system.membus = SystemXBar()
 
+system.membus = SystemXBar()
 # Connect each CPU's cache ports to the membus
 for cpu in system.cpu:
     cpu.icache_port = system.membus.cpu_side_ports
@@ -159,6 +156,8 @@ for cpu in system.cpu:
 #Instantiate system and begin execution
 root = Root(full_system = False, system = system)
 m5.instantiate()
+
+#print_config(config_path, mem_mode, clock_freq, voltage, mem_size, cpu_type, num_cores, dram_type, binary)
 
 print("Beginning simulation!")
 exit_event = m5.simulate()
