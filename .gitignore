@@ -4,7 +4,7 @@ lib/LibIsolationForest/*
 simulators/gem5/*
 simulators/ns-3.43/*
 
-# Don't ignore these specific files that should be tracked
+# Don't ignore these specific files that should be tracked, keeps structure intact
 !datasets/OPS-SAT-AD/.gitkeep
 !lib/LibIsolationForest/.gitkeep
 !simulators/gem5/.gitkeep
