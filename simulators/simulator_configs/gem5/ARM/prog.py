@@ -157,7 +157,7 @@ for cpu in system.cpu:
 root = Root(full_system = False, system = system)
 m5.instantiate()
 
-print_config(config_path, mem_mode, clock_freq, voltage, mem_size, cpu_type, num_cores, dram_type, binary)
+#print_config(config_path, mem_mode, clock_freq, voltage, mem_size, cpu_type, num_cores, dram_type, binary)
 
 print("Beginning simulation!")
 exit_event = m5.simulate()
