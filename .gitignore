@@ -1,0 +1,11 @@
+# Ignore untracked content in submodules
+datasets/OPS-SAT-AD/*
+lib/LibIsolationForest/*
+simulators/gem5/*
+simulators/ns-3.43/*
+
+# Don't ignore these specific files that should be tracked
+!datasets/OPS-SAT-AD/.gitkeep
+!lib/LibIsolationForest/.gitkeep
+!simulators/gem5/.gitkeep
+!simulators/ns-3.43/.gitkeep
