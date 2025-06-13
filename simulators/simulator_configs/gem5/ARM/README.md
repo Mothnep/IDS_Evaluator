@@ -21,6 +21,13 @@ The configuration file defines parameters for ARM processor simulations organize
 | `type` | CPU model | `"AtomicSimpleCPU"` (Requests instantly finished)<br>`"TimingSimpleCPU"` (Memory access but no pipelining)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
 | `num_cores` | Number of CPU cores | Correct Syntax: `1`, `2`, `4`, `8`, etc... |
 
+## Branch Prediction Parameters
+
+| Parameter | Description | Available Options |
+|-----------|-------------|-------------------|
+| `branch_prediction.enabled` | Enable Branch Prediction | `true`, `false` |
+| `branch_predictor.predictor_type` | Type of branch predictor | `"tournament"`, `"bimode"`, `"simple"`, `"local"`, `"2bit"` |
+
 ## Memory Parameters
 
 | Parameter | Description | Available Options |
@@ -32,14 +39,44 @@ The configuration file defines parameters for ARM processor simulations organize
 
 ## Cache Hierarchy
 
+### General L1 Cache Parameters
+These Parameters apply to both L1I(Instructions) and L1D(Data) caches unless overridden by specific cache parameters.
+
+| Parameter | Description | Default Value | Available Options |
+|-----------|-------------|---------------|-------------------|
+| `l1.tag_latency` | L1 tag lookup latency | 2 | Any positive Integer |
+| `l1.data_latency` | L1 data access latency | 2 | Any positive Integer |
+| `l1.response_latency` | L1 response latency | 2 | Any positive Integer |
+| `l1.mshrs` | L1 miss status handling registers | 4 | Any positive Integer |
+| `l1.tgts_per_mshr` | L1 targets per MSHR | 20 | Any positive Integer |
+
+### L1 Instruction Cache Parameters
+
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `l1i_size` | L1 instruction cache size | `"16kB"`, `"32kB"`, `"64kB"` |
-| `l1i_assoc` | L1 instruction cache associativity | `2`, `4`, `8` |
-| `l1d_size` | L1 data cache size | `"16kB"`, `"32kB"`, `"64kB"` |
-| `l1d_assoc` | L1 data cache associativity | `2`, `4`, `8` |
-| `l2_size` | L2 cache size | `"256kB"`, `"512kB"`, `"1MB"`, `"2MB"` |
-| `l2_assoc` | L2 cache associativity | `4`, `8`, `16` |
+| `l1i.size` | L1I cache size | `"16kB"`, `"32kB"`, `"64kB"`, etc... |
+| `l1i.assoc` | L1I cache associativity | `1`, `2`, `4`, `8`, etc... |
+
+### L1 Data Cache Parameters
+
+| Parameter | Description | Available Options |
+|-----------|-------------|-------------------|
+| `l1d.size` | L1D cache size | `"16kB"`, `"32kB"`, `"64kB"`, etc... |
+| `l1d.assoc` | L1D cache associativity | `1`, `2`, `4`, `8`, etc... |
+
+### L2 Cache Parameters
+Unified cache model
+
+| Parameter | Description | Default Value | Available Options |
+|-----------|-------------|---------------|-------------------|
+| `l2.size` | L2 cache size | - |  `"256kB"`, `"512kB"`, `"1MB"`, `"2MB"`, etc... |
+| `l2.assoc` | L2 cache associativity | - |  `"1"`, `"2"`, `"4"`, `"8"`,  etc... |
+| `l2.tag_latency` | L2 tag lookup latency | 20 | Any positive Integer |
+| `l2.data_latency` | L2 data access latency | 20 | Any positive Integer |
+| `l2.response_latency` | L2 response latency | 20 | Any positive Integer |
+| `l2.mshrs` | L2 miss status handling registers | 20 | Any positive Integer |
+| `l2.tgts_per_mshr` | L2 targets per MSHR | 20 | Any positive Integer |
+
 
 ## Process Parameters
 
