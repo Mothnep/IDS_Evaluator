@@ -12,21 +12,23 @@ The configuration file defines parameters for ARM processor simulations organize
 |-----------|-------------|-------------------|
 | `mem_mode` | Memory access simulation mode<br>(Needs to fit CPU type) | `"atomic"` (warming up)<br>`"timing"` (only suitable for simulations)<br>`"functional"` (debugging mode) |
 | `clock_domain.clock` | CPU clock frequency | Correct Syntax: `"1GHz"`, `"2GHz"`, `"3GHz"`, `"4GHz"`, etc... |
-| `clock_domain.voltage_domain.voltage` | CPU voltage | Correct Sytax: `"0.8V"`, `"1.2V"`, etc... |
+| `clock_domain.voltage_domain.voltage` | CPU voltage | Correct Syntax: `"0.8V"`, `"1.2V"`, etc... |
 
 ## CPU Parameters
 
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
-| `type` | CPU model | `"AtomicSimpleCPU"` (Requests instantly finished)<br>`"TimingSimpleCPU"` (Memory access but no pipelining)<br>`"O3CPU"` (out-of-order)<br>`"MinorCPU"` (in-order) |
+| `type` | CPU model | `"AtomicSimpleCPU"` (Requests instantly finished)<br>`"TimingSimpleCPU"` (Memory access but no pipelining)<br>`"O3CPU"` (Out-of-order execution)<br>`"MinorCPU"` (In-order pipelined) |
 | `num_cores` | Number of CPU cores | Correct Syntax: `1`, `2`, `4`, `8`, etc... |
 
 ## Branch Prediction Parameters
 
+Branch prediction is only supported for O3CPU and MinorCPU models.
+
 | Parameter | Description | Available Options |
 |-----------|-------------|-------------------|
 | `branch_prediction.enabled` | Enable Branch Prediction | `true`, `false` |
-| `branch_predictor.predictor_type` | Type of branch predictor | `"tournament"`, `"bimode"`, `"simple"`, `"local"`, `"2bit"` |
+| `branch_prediction.predictor_type` | Type of branch predictor | `"tournament"` (Combines local and global history)<br>`"bimode"` (Direction-based selection)<br>`"simple"` (Basic predictor)<br>`"local"` (Uses local branch history)<br>`"2bit"` (2-bit saturating counters) |
 
 ## Memory Parameters
 
@@ -65,17 +67,17 @@ These Parameters apply to both L1I(Instructions) and L1D(Data) caches unless ove
 | `l1d.assoc` | L1D cache associativity | `1`, `2`, `4`, `8`, etc... |
 
 ### L2 Cache Parameters
-Unified cache model
+Unified cache model with the following default values if not specified:
 
 | Parameter | Description | Default Value | Available Options |
 |-----------|-------------|---------------|-------------------|
 | `l2.size` | L2 cache size | - |  `"256kB"`, `"512kB"`, `"1MB"`, `"2MB"`, etc... |
-| `l2.assoc` | L2 cache associativity | - |  `"1"`, `"2"`, `"4"`, `"8"`,  etc... |
+| `l2.assoc` | L2 cache associativity | - |  `1`, `2`, `4`, `8`,  etc... |
 | `l2.tag_latency` | L2 tag lookup latency | 20 | Any positive Integer |
 | `l2.data_latency` | L2 data access latency | 20 | Any positive Integer |
 | `l2.response_latency` | L2 response latency | 20 | Any positive Integer |
 | `l2.mshrs` | L2 miss status handling registers | 20 | Any positive Integer |
-| `l2.tgts_per_mshr` | L2 targets per MSHR | 20 | Any positive Integer |
+| `l2.tgts_per_mshr` | L2 targets per MSHR | 12 | Any positive Integer |
 
 
 ## Process Parameters
@@ -83,15 +85,14 @@ Unified cache model
 | Parameter | Description | Purpose |
 |-----------|-------------|---------|
 | `binary` | Path to ARM executable | Cross-compiled binary to execute |
-| `args` | Command line arguments | Arguments passed to the binary |
 
 
 ## Default Configuration
 
 The default configuration provides a balanced setup for ARM simulation with:
 - ARMv8 architecture with 2GHz clock
-- TimingSimpleCPU model with 1 core
-- 32kB L1 caches and 1MB L2 cache
-- 2GB system memory with DDR4 controller
+- O3CPU model with 2 cores and tournament branch prediction
+- 32kB L1 caches (2-way) and 1MB L2 cache (8-way)
+- 2GB system memory with DDR3 controller
 
 To create additional configurations, add new entries to the `configurations` object.

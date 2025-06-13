@@ -9,9 +9,7 @@
           "voltage_domain": {
             "voltage": "2.0V"
           }
-        },
-        "arch": "armv8",
-        "isa_checker": false
+        }
       },
       "cpu": {
         "type": "O3CPU",
@@ -58,11 +56,7 @@
         }
       },
       "process": {
-        "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello",
-        "args": [],
-        "output": "",
-        "env": {},
-        "input": ""
+        "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello"
       }
     }
   }
