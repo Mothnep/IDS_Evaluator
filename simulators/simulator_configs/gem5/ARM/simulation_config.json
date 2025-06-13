@@ -14,8 +14,12 @@
         "isa_checker": false
       },
       "cpu": {
-        "type": "TimingSimpleCPU",
-        "num_cores": 2
+        "type": "O3CPU",
+        "num_cores": 2,
+        "branch_prediction": {
+          "enabled": true,
+          "predictor_type": "tournament"
+        }
       },
       "memory": {
         "override_gem5_data": false,

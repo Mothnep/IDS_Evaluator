@@ -169,6 +169,41 @@ for i in range(num_cores):
         elif cpu_type == "MinorCPU":
             system.cpu[i] = ArmMinorCPU(cpu_id=i)
 
+# Configure branch prediction for compatible CPU types
+for i in range(num_cores):
+    # First check if branch prediction is enabled in config
+    bp_enabled = False
+    if "branch_prediction" in config["cpu"]:
+        bp_config = config["cpu"]["branch_prediction"]
+        bp_enabled = bp_config.get("enabled", False)
+    
+    # Then handle appropriate CPU types
+    if bp_enabled:
+        # Branch prediction enabled - check CPU compatibility
+        if cpu_type in ["O3CPU", "MinorCPU"]:
+            # Get predictor type (default to tournament if not specified)
+            predictor_type = bp_config.get("predictor_type", "tournament").lower()
+            
+            # Create appropriate branch predictor based on type
+            if predictor_type == "tournament":
+                system.cpu[i].branchPred = TournamentBP()
+            elif predictor_type == "bimode":
+                system.cpu[i].branchPred = BiModeBP()
+            elif predictor_type == "simple":
+                system.cpu[i].branchPred = SimpleBP()
+            elif predictor_type == "local":
+                system.cpu[i].branchPred = LocalBP()
+            elif predictor_type == "2bit":
+                system.cpu[i].branchPred = TwoBitBP()
+            else:
+                print(f"Warning: Unrecognized branch predictor type '{predictor_type}'. Using TournamentBP.")
+                system.cpu[i].branchPred = TournamentBP()
+                
+            print(f"Configured {predictor_type} branch predictor for CPU {i}")
+        else:
+            # Branch prediction enabled but CPU doesn't support it
+            print(f"Warning: Branch prediction enabled but not supported for {cpu_type}")
+
 # Create L2 bus first (needed for connections because L2 expects a single connection)
 system.l2bus = L2XBar()
 
