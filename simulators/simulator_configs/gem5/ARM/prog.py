@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from m5.util import convert
+from caches import *
 
 def load_config(config_file, config_name="default"):
     """Load configuration from JSON file
@@ -92,6 +93,7 @@ def set_dram_size(dram_obj):
 
 # Initialize system and basic parameters
 system = System()
+system.membus = SystemXBar()
 
 # Set clock domain and voltage domain
 system.clk_domain = SrcClockDomain()
@@ -110,6 +112,51 @@ else:
     raise ValueError(f"Unsupported memory mode: {mem_mode}")
 
 
+# Create an options object to pass to the cache constructors
+class Options(object):
+    pass
+    
+options = Options()
+
+# Extract cache configuration from JSON and populate options object
+if "cache_hierarchy" in config:
+    cache_config = config["cache_hierarchy"]
+    
+    # General L1 cache parameters (apply to both I and D caches)
+    if "l1" in cache_config:
+        if "tag_latency" in cache_config["l1"]:
+            options.l1_tag_latency = cache_config["l1"]["tag_latency"]
+        if "data_latency" in cache_config["l1"]:
+            options.l1_data_latency = cache_config["l1"]["data_latency"]
+        if "response_latency" in cache_config["l1"]:
+            options.l1_response_latency = cache_config["l1"]["response_latency"]
+        if "mshrs" in cache_config["l1"]:
+            options.l1_mshrs = cache_config["l1"]["mshrs"]
+        if "tgts_per_mshr" in cache_config["l1"]:
+            options.l1_tgts_per_mshr = cache_config["l1"]["tgts_per_mshr"]
+    
+    # L1I cache parameters - keep only size and associativity
+    if "l1i" in cache_config:
+        options.l1i_size = cache_config["l1i"]["size"]
+        options.l1i_assoc = cache_config["l1i"]["assoc"]
+        #Overarching parameters can be made specific to L1I cache here if needed
+    
+    # L1D cache parameters - keep only size and associativity
+    if "l1d" in cache_config:
+        options.l1d_size = cache_config["l1d"]["size"]
+        options.l1d_assoc = cache_config["l1d"]["assoc"]
+        #Overarching parameters can be made specific to L1D cache here if needed
+    
+    # L2 cache parameters
+    if "l2" in cache_config:
+        options.l2_size = cache_config["l2"]["size"]
+        options.l2_assoc = cache_config["l2"]["assoc"]  
+        options.l2_tag_latency = cache_config["l2"]["tag_latency"]
+        options.l2_data_latency = cache_config["l2"]["data_latency"]
+        options.l2_response_latency = cache_config["l2"]["response_latency"]
+        options.l2_mshrs = cache_config["l2"]["mshrs"]
+        options.l2_tgts_per_mshr = cache_config["l2"]["tgts_per_mshr"]
+
 # Create the CPU vector properly (can't be empty)
 system.cpu = [ArmTimingSimpleCPU(cpu_id=i) for i in range(num_cores)] 
 # Then configure each CPU based on type if needed
@@ -122,15 +169,30 @@ for i in range(num_cores):
         elif cpu_type == "MinorCPU":
             system.cpu[i] = ArmMinorCPU(cpu_id=i)
 
+# Create L2 bus first (needed for connections because L2 expects a single connection)
+system.l2bus = L2XBar()
 
-system.membus = SystemXBar()
-# Connect each CPU's cache ports to the membus
-for cpu in system.cpu:
-    cpu.icache_port = system.membus.cpu_side_ports
-    cpu.dcache_port = system.membus.cpu_side_ports
-    cpu.createInterruptController()
+# Create caches for each CPU first
+for i in range(num_cores):
+    # Create caches for this CPU
+    system.cpu[i].icache = L1ICache(options=options)
+    system.cpu[i].dcache = L1DCache(options=options)
+    
+    # Connect the caches to the CPU ports
+    system.cpu[i].icache.connectCPU(system.cpu[i])
+    system.cpu[i].dcache.connectCPU(system.cpu[i])
+    
+    # Connect the caches to the L2 bus
+    system.cpu[i].icache.connectBus(system.l2bus)
+    system.cpu[i].dcache.connectBus(system.l2bus)
+    
+    # Create interrupt controller for this CPU
+    system.cpu[i].createInterruptController()
 
-system.system_port = system.membus.cpu_side_ports # Request on on left, response on right
+# Now create and connect the L2 cache
+system.l2cache = L2Cache(options=options)
+system.l2cache.connectCPUSideBus(system.l2bus)
+system.l2cache.connectMemSideBus(system.membus)
 
 # Memory controller setup (needs to be in a loop if wanting to increase number of dram channels)
 system.mem_ctrl = MemCtrl()

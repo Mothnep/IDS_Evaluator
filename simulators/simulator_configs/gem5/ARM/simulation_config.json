@@ -15,9 +15,7 @@
       },
       "cpu": {
         "type": "TimingSimpleCPU",
-        "num_cores": 2,
-        "icache_size": "32kB",
-        "dcache_size": "32kB"
+        "num_cores": 2
       },
       "memory": {
         "override_gem5_data": false,
@@ -30,12 +28,30 @@
         
       },
       "cache_hierarchy": {
-        "l1i_size": "32kB",
-        "l1i_assoc": 2,
-        "l1d_size": "32kB",
-        "l1d_assoc": 2,
-        "l2_size": "1MB",
-        "l2_assoc": 8
+        "l1": {
+          "tag_latency": 2,
+          "data_latency": 2,
+          "response_latency": 2,
+          "mshrs": 4,
+          "tgts_per_mshr": 20
+        },
+        "l1i": {
+          "size": "32kB",
+          "assoc": 2
+        },
+        "l1d": {
+          "size": "32kB",
+          "assoc": 2
+        },
+        "l2": {
+          "size": "1MB",
+          "assoc": 8,
+          "tag_latency": 20,
+          "data_latency": 20,
+          "response_latency": 20,
+          "mshrs": 20,
+          "tgts_per_mshr": 12
+        }
       },
       "process": {
         "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello",
