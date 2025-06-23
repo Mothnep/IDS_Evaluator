@@ -13,7 +13,7 @@
       },
       "cpu": {
         "type": "O3CPU",
-        "num_cores": 2,
+        "num_cores": 1,
         "branch_prediction": {
           "enabled": true,
           "predictor_type": "tournament"
@@ -56,7 +56,7 @@
         }
       },
       "process": {
-        "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello"
+        "binary": "/gem5/tests/test-progs/hello/bin/arm/linux/hello"
       }
     }
   }
