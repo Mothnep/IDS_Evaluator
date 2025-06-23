@@ -3,7 +3,7 @@
 
     "default": {
       "system": {
-        "mem_mode": "timing",
+        "mem_mode": "atomic",
         "clock_domain": {
           "clock": "2GHz",
           "voltage_domain": {
@@ -12,7 +12,7 @@
         }
       },
       "cpu": {
-        "type": "O3CPU",
+        "type": "AtomicSimpleCPU",
         "num_cores": 1,
         "branch_prediction": {
           "enabled": true,
