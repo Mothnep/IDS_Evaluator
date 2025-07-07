@@ -1,5 +1,5 @@
-#include "../lib/LibIsolationForest/cpp/IsolationForest.h"
-#include "../helper/helper_functions.h"
+#include "lib/LibIsolationForest/cpp/IsolationForest.h"
+#include "helper/helper_functions.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -19,7 +19,7 @@ int main() { //example implementation
     const uint32_t SUB_SAMPLING_SIZE = 256; //number of rows a single tree sees
     
     // Read the dataset
-    vector<vector<string>> csvData = readCSV(true, "../datasets/OPS-SAT-AD/data/dataset.csv");
+    vector<vector<string>> csvData = readCSV(true, "datasets/OPS-SAT-AD/data/dataset.csv");
     
     // Create the forest
     Forest forest(NUM_TREES, SUB_SAMPLING_SIZE);

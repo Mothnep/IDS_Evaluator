@@ -45,5 +45,8 @@ ENV PYTHONPATH="/usr/local/lib/python3.6/dist-packages:/usr/lib/python3/dist-pac
 # Build gem5 for ARM with explicit Python 3 usage
 RUN python3 $(which scons) build/ARM/gem5.opt -j$(nproc)
 
+# Create results directory for simulation outputs
+RUN mkdir -p /gem5/results
+
 # Command to run when container starts
 CMD ["/bin/bash"]

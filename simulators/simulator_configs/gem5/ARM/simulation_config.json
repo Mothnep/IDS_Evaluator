@@ -56,7 +56,7 @@
         }
       },
       "process": {
-        "binary": "/gem5/tests/test-progs/hello/bin/arm/linux/hello"
+        "binary": "/simulator_configs/gem5/ARM/test_gem5_arm"
       }
     }
   }
