@@ -12,10 +12,13 @@
 using namespace IsolationForest;
 using namespace std;
 
-int main() { //example implementation
+int main() {
+    // Set random seed for reproducible results
+    srand(42);  // Or any fixed number
+    
     // Parameters for the forest
-    const uint32_t NUM_TREES = 10;        // Reduced from 100
-    const uint32_t SUB_SAMPLING_SIZE = 64; // Reduced from 256
+    const uint32_t NUM_TREES = 10;
+    const uint32_t SUB_SAMPLING_SIZE = 64;
     
     // Read the dataset - now using embedded data instead of file
     vector<vector<string>> csvData = readEmbeddedDataset(true);
