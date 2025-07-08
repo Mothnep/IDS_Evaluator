@@ -353,3 +353,27 @@ vector<vector<string>> readCSV(bool headerRow, const string& filename) { //const
 
     return data;
 }
+
+#include "dataset_array.cpp"  // Include the generated array
+
+/**
+ * Read embedded dataset and return its contents as a vector of vectors of strings.
+ * This is a drop-in replacement for readCSV that uses embedded C++ arrays.
+ */
+vector<vector<string>> readEmbeddedDataset(bool headerRow, const string& filename = "") {
+    vector<vector<string>> data;
+    
+    cout << "Using embedded dataset with " << DataArrays::NUM_ROWS << " rows and " 
+         << DataArrays::NUM_COLS << " columns" << endl;
+    
+    // Convert embedded data to the same format as readCSV
+    for (int i = 0; i < DataArrays::NUM_ROWS; i++) {
+        vector<string> row = DataArrays::getRow(i);
+        if (!row.empty()) {
+            data.push_back(row);
+        }
+    }
+    
+    cout << "Successfully loaded " << data.size() << " samples from embedded dataset" << endl;
+    return data;
+}

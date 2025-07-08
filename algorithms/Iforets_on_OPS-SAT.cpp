@@ -12,14 +12,13 @@
 using namespace IsolationForest;
 using namespace std;
 
-
 int main() { //example implementation
     // Parameters for the forest
-    const uint32_t NUM_TREES = 100;
-    const uint32_t SUB_SAMPLING_SIZE = 256; //number of rows a single tree sees
+    const uint32_t NUM_TREES = 10;        // Reduced from 100
+    const uint32_t SUB_SAMPLING_SIZE = 64; // Reduced from 256
     
-    // Read the dataset
-    vector<vector<string>> csvData = readCSV(true, "datasets/OPS-SAT-AD/data/dataset.csv");
+    // Read the dataset - now using embedded data instead of file
+    vector<vector<string>> csvData = readEmbeddedDataset(true);
     
     // Create the forest
     Forest forest(NUM_TREES, SUB_SAMPLING_SIZE);
@@ -65,15 +64,22 @@ int main() { //example implementation
     int anomalyCount = count(isAnomaly.begin(), isAnomaly.end(), true);
     cout << "Dataset contains " << anomalyCount << " anomalies and " 
             << (isAnomaly.size() - anomalyCount) << " normal samples.\n\n";
+    cout << "Creating forest with " << NUM_TREES << " trees..." << endl;
+    cout << "This may take several minutes in gem5..." << endl;
     forest.Create();
     cout << "Forest creation complete.\n\n";
     
     // Calculate anomaly scores for all samples
+    cout << "Calculating anomaly scores..." << endl;
     vector<double> scores;
-    for (const auto& sample : allSamples) {
-        double score = 1.0 - forest.NormalizedScore(sample); //Library is wrong
+    for (size_t i = 0; i < allSamples.size(); i++) {
+        if (i % 100 == 0) {  // Progress every 100 samples
+            cout << "Processed " << i << "/" << allSamples.size() << " samples" << endl;
+        }
+        double score = 1.0 - forest.NormalizedScore(allSamples[i]);
         scores.push_back(score);
     }
+    cout << "Scoring complete." << endl;
     
     // Calculate average scores for normal and anomaly samples
     double avgNormalScore = 0.0, avgAnomalyScore = 0.0;

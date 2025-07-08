@@ -84,4 +84,15 @@ void printEvaluationResults(
  * @return Vector of string vectors representing the CSV rows
  */
 vector<vector<string>> readCSV(bool headerRow, const string& filename);
+
+/**
+ * Read embedded dataset and return its contents as a vector of vectors of strings.
+ * This is a drop-in replacement for readCSV that uses embedded C++ arrays.
+ * 
+ * @param headerRow Whether to include headers (ignored for compatibility)
+ * @param filename Filename (ignored for compatibility) 
+ * @return Vector of string vectors representing the dataset rows
+ */
+vector<vector<string>> readEmbeddedDataset(bool headerRow = true, const string& filename = "");
+
 #endif // HELPER_FCTS_H
