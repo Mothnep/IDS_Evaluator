@@ -13,7 +13,7 @@ CSV_TO_CPP_SCRIPT="$PROJECT_ROOT/helper/csv_to_cpp_array.py"
 MAIN_SOURCE="algorithms/Iforets_on_OPS-SAT.cpp"
 HELPER_SOURCE="helper/helper_functions.cpp"
 IFOREST_SOURCE="lib/LibIsolationForest/cpp/IsolationForest.cpp"
-OUTPUT_BINARY="iforest_embedded_arm"
+OUTPUT_BINARY="algorithms/exe/iforest_arm"
 
 # Include directories
 INCLUDE_DIRS="-I. -Ilib/LibIsolationForest/cpp -Ihelper"
@@ -22,6 +22,8 @@ INCLUDE_DIRS="-I. -Ilib/LibIsolationForest/cpp -Ihelper"
 cd "$PROJECT_ROOT" || exit 1
 
 echo "Current directory: $(pwd)"
+
+mkdir -p "algorithms/exe"
 
 # Step 1: Check if dataset CSV exists
 if [ ! -f "$DATASET_CSV" ]; then

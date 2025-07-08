@@ -1,5 +1,4 @@
 #!/bin/bash
-# filepath: /home/mothnep/Desktop/IDS_evaluation_tool/run_evaluation.sh
 
 # Set color codes for output
 GREEN='\033[0;32m'
@@ -7,8 +6,9 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Configuration
-TOOL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Configuration - Fix path calculation since script is now in scripts/ folder
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOOL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"  # Go up one level to project root
 ALGORITHMS_DIR="$TOOL_DIR/algorithms"
 EXE_DIR="$ALGORITHMS_DIR/exe"  
 RESULTS_DIR="$TOOL_DIR/results"
@@ -17,7 +17,7 @@ COMPILER="g++"
 COMPILER_FLAGS="-std=c++17 -Wall -Wextra -O2"
 VENV_DIR="$TOOL_DIR/venv"
 
-# Create directories if they don't exist
+# Create directories if they don't exist (at project root level)
 mkdir -p "$RESULTS_DIR" "$ROC_DATA_DIR" "$EXE_DIR"
 
 # Setup Python virtual environment if it doesn't exist
@@ -98,7 +98,7 @@ evaluate_algorithm() {
         elif [ -f "$lib_path" ] && [[ "$lib_path" == *.cpp ]]; then
             # It's a single cpp file
             echo -e "  - Including source: $(basename "$lib_path")"
-            lib_files="$lib_files $cpp_file"
+            lib_files="$lib_files $lib_path"  # Fixed: was using $cpp_file instead of $lib_path
             # Add its directory to include paths
             include_paths="$include_paths -I$(dirname "$lib_path")"
         fi
@@ -107,9 +107,9 @@ evaluate_algorithm() {
     # Compile the algorithm with specified libraries
     echo -e "${GREEN}Compiling algorithm with dependencies...${NC}"
     echo "$COMPILER $COMPILER_FLAGS $algo_file $lib_files -o $executable $include_paths"
-    $COMPILER $COMPILER_FLAGS $algo_file $lib_files -o "$executable" $include_paths #echo for debugging
+    $COMPILER $COMPILER_FLAGS $algo_file $lib_files -o "$executable" $include_paths
     
-    if [ $? -ne 0 ]; then #If exit status of previous command != 0 (error) (-ne = not equal operator)
+    if [ $? -ne 0 ]; then
         echo -e "${RED}Compilation failed!${NC}"
         return 1
     fi
@@ -169,7 +169,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # Script is being executed directly
     
     # Check if at least one argument is provided
-    if [ $# -eq 0 ]; then # If no arguments, print usage example and exit
+    if [ $# -eq 0 ]; then
         echo "Usage: $0 <algorithm_file.cpp> [--lib library_path [--lib library_path] ...]"
         echo "Example: $0 Iforets_on_OPS-SAT.cpp --lib LibIsolationForest/cpp"
         echo "         $0 Iforets_on_OPS-SAT.cpp --lib lib/LibIsolationForest/cpp"
@@ -180,19 +180,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     shift # Remove algorithm file from arguments
     
     # If only filename is provided, assume it's in the algorithms directory
-    if [[ ! "$algorithm_file" == */* ]]; then #Check for slashes in the filename
+    if [[ ! "$algorithm_file" == */* ]]; then
         algorithm_file="$ALGORITHMS_DIR/$algorithm_file"
     fi
     
     # Validate the algorithm file exists
-    if [ ! -f "$algorithm_file" ]; then #-f = file operator
+    if [ ! -f "$algorithm_file" ]; then
         echo -e "${RED}Error: Algorithm file not found: $algorithm_file${NC}"
         exit 1
     fi
     
     # Parse remaining arguments for libraries
-    lib_paths=() # Array to hold library paths
-    while [ $# -gt 0 ]; do #While amount of arguments left is greater than 0
+    lib_paths=()
+    while [ $# -gt 0 ]; do
         if [ "$1" == "--lib" ] && [ $# -gt 1 ]; then
             # Handle path resolution with smart prefixing
             if [[ "$2" == /* ]]; then
