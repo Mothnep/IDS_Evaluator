@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"  # Go up one level to project root
 ALGORITHMS_DIR="$TOOL_DIR/algorithms"
 EXE_DIR="$ALGORITHMS_DIR/exe"  
-RESULTS_DIR="$TOOL_DIR/results"
+RESULTS_DIR="$TOOL_DIR/algorithms/results"
 ROC_DATA_DIR="$ALGORITHMS_DIR/ROC_CSV"  
 COMPILER="g++"
 COMPILER_FLAGS="-std=c++17 -Wall -Wextra -O2"

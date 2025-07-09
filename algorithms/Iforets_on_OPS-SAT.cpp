@@ -12,19 +12,38 @@
 using namespace IsolationForest;
 using namespace std;
 
+// Custom randomizer for reproducible results
+class SeededRandomizer : public Randomizer {
+public:
+    SeededRandomizer(uint64_t seed) : m_gen(seed) {}
+    virtual ~SeededRandomizer() {}
+    
+    virtual uint64_t Rand() override { return m_dist(m_gen); }
+    virtual uint64_t RandUInt64(uint64_t min, uint64_t max) override { 
+        return min + (Rand() % (max - min + 1)); 
+    }
+
+private:
+    std::mt19937_64 m_gen;
+    std::uniform_int_distribution<uint64_t> m_dist;
+};
+
 int main() {
     // Set random seed for reproducible results
     srand(42);  // Or any fixed number
     
-    // Parameters for the forest
-    const uint32_t NUM_TREES = 10;
-    const uint32_t SUB_SAMPLING_SIZE = 64;
+    // Parameters for the forest - very small for testing
+    const uint32_t NUM_TREES = 100; ///5
+    const uint32_t SUB_SAMPLING_SIZE = 256; //16
     
     // Read the dataset - now using embedded data instead of file
     vector<vector<string>> csvData = readEmbeddedDataset(true);
     
     // Create the forest
     Forest forest(NUM_TREES, SUB_SAMPLING_SIZE);
+    
+    // Set a reproducible random seed for the forest
+    forest.SetRandomizer(new SeededRandomizer(42));
     
     // Prepare samples and get anomaly labels
     vector<Sample> allSamples; //rows
@@ -46,17 +65,20 @@ int main() {
         Sample sample("sample_" + row[0]);
         FeaturePtrList features;
         
-        // Add features from dataset
-        features.push_back(new Feature("mean", stod(row[7])));
-        features.push_back(new Feature("var", stod(row[8])));
-        features.push_back(new Feature("std", stod(row[9])));
-        features.push_back(new Feature("kurtosis", stod(row[10])));
-        features.push_back(new Feature("skew", stod(row[11])));
-        features.push_back(new Feature("n_peaks", stod(row[12])));
-        features.push_back(new Feature("smooth10_n_peaks", stod(row[13])));
-        features.push_back(new Feature("smooth20_n_peaks", stod(row[14])));
-        features.push_back(new Feature("diff_peaks", stod(row[15])));
-        features.push_back(new Feature("diff2_peaks", stod(row[16])));
+        // Use minimal scaling - just enough to make floats into small integers
+        // The key is to keep numbers small for fast tree construction
+        
+        // Add features from dataset - use VERY minimal scaling to keep numbers tiny
+        features.push_back(new Feature("mean", (uint64_t)((stod(row[7]) * 10.0) + 10)));
+        features.push_back(new Feature("var", (uint64_t)((stod(row[8]) * 10.0) + 10)));
+        features.push_back(new Feature("std", (uint64_t)((stod(row[9]) * 10.0) + 10)));
+        features.push_back(new Feature("kurtosis", (uint64_t)((stod(row[10]) + 1.0) * 5)));
+        features.push_back(new Feature("skew", (uint64_t)((stod(row[11]) + 1.0) * 5)));
+        features.push_back(new Feature("n_peaks", (uint64_t)(stod(row[12]) + 1)));
+        features.push_back(new Feature("smooth10_n_peaks", (uint64_t)(stod(row[13]) + 1)));
+        features.push_back(new Feature("smooth20_n_peaks", (uint64_t)(stod(row[14]) + 1)));
+        features.push_back(new Feature("diff_peaks", (uint64_t)(stod(row[15]) + 1)));
+        features.push_back(new Feature("diff2_peaks", (uint64_t)(stod(row[16]) + 1)));
         
         sample.AddFeatures(features);
         allSamples.push_back(sample);
@@ -79,7 +101,8 @@ int main() {
         if (i % 100 == 0) {  // Progress every 100 samples
             cout << "Processed " << i << "/" << allSamples.size() << " samples" << endl;
         }
-        double score = 1.0 - forest.NormalizedScore(allSamples[i]);
+        // NormalizedScore already returns higher values for anomalies
+        double score = forest.NormalizedScore(allSamples[i]);
         scores.push_back(score);
     }
     cout << "Scoring complete." << endl;

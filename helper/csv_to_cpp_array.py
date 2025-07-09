@@ -2,7 +2,7 @@ import csv
 import sys
 import os
 
-def csv_to_cpp_array(csv_file_path, output_file_path=None, max_rows=50):  # Add max_rows parameter
+def csv_to_cpp_array(csv_file_path, output_file_path=None, max_rows=2000):  # Add max_rows parameter
     """
     Convert CSV file to C++ array format
     """
