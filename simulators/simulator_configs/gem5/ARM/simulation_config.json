@@ -49,6 +49,57 @@
       "process": {
         "binary": "/simulator_configs/gem5/ARM/iforest_embedded_arm"
       }
+    },
+
+    "cortex_a72": {
+      "system": {
+        "mem_mode": "timing",
+        "clock_domain": {
+          "clock": "1.8GHz",
+          "voltage_domain": {
+            "voltage": "1.0V"
+          }
+        }
+      },
+      "cpu": {
+        "type": "O3CPU",
+        "num_cores": 1,
+        "branch_prediction": {
+          "enabled": true,
+          "predictor_type": "tournament"
+        }
+      },
+      "memory": {
+        "override_gem5_data": false,
+        "dram": {
+          "type": "DDR4_2400_8x8",
+          "ranks_per_channel": 1,
+          "channels": 1,
+          "size": "2GB"
+        }
+      },
+      "cache_hierarchy": {
+        "l1i": {
+          "size": "48kB",
+          "assoc": 3
+        },
+        "l1d": {
+          "size": "32kB",
+          "assoc": 2
+        },
+        "l2": {
+          "size": "1MB",
+          "assoc": 16,
+          "tag_latency": 12,
+          "data_latency": 12,
+          "response_latency": 12,
+          "mshrs": 16,
+          "tgts_per_mshr": 12
+        }
+      },
+      "process": {
+        "binary": "/simulator_configs/gem5/ARM/iforest_embedded_arm"
+      }
     }
   }
 }
