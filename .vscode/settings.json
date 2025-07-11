@@ -82,5 +82,6 @@
         "valarray": "cpp",
         "variant": "cpp"
     },
-    "github.copilot.nextEditSuggestions.enabled": true
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "git.ignoreLimitWarning": true
 }
