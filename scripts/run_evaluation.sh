@@ -98,8 +98,7 @@ evaluate_algorithm() {
         elif [ -f "$lib_path" ] && [[ "$lib_path" == *.cpp ]]; then
             # It's a single cpp file
             echo -e "  - Including source: $(basename "$lib_path")"
-            lib_files="$lib_files $lib_path"  # Fixed: was using $cpp_file instead of $lib_path
-            # Add its directory to include paths
+            lib_files="$lib_files $lib_path"
             include_paths="$include_paths -I$(dirname "$lib_path")"
         fi
     done
@@ -118,7 +117,7 @@ evaluate_algorithm() {
     
     # Run the algorithm
     echo -e "\n${GREEN}Running algorithm...${NC}"
-    cd "$ALGORITHMS_DIR"  # Change directory to ensure relative paths work
+    cd "$ALGORITHMS_DIR"
     "$executable"
     
     if [ $? -ne 0 ]; then
@@ -129,22 +128,30 @@ evaluate_algorithm() {
     
     cd "$TOOL_DIR"
     
-    # Plot the ROC curve using the existing helper script
+    # Plot the ROC curve ONLY for this specific algorithm
     print_header "Generating ROC Plot"
     
-    # Run the existing plot_roc_curve.py script with the virtual environment
-    # Pass the results directory as an argument
-    echo -e "${GREEN}Plotting ROC curve with existing script...${NC}"
-    run_python_script "$TOOL_DIR/helper/plot_roc_curve.py" "$RESULTS_DIR"
+    # Extract the algorithm name that would be used in the CSV filename
+    # This should match what's passed to evaluateAlgorithm() in the C++ code
+    local csv_algorithm_name
+    if [[ "$algo_name" == *"_on_"* ]]; then
+        # Extract the part before "_on_" for algorithm name
+        csv_algorithm_name=$(echo "$algo_name" | sed 's/_on_.*//')
+    else
+        csv_algorithm_name="$algo_name"
+    fi
+    
+    echo -e "${GREEN}Plotting ROC curve for algorithm: $csv_algorithm_name${NC}"
+    run_python_script "$TOOL_DIR/helper/plot_roc_curve.py" --output "$RESULTS_DIR" --algorithm "$csv_algorithm_name"
     
     print_header "Evaluation Complete"
     echo -e "${GREEN}Results saved to ${RESULTS_DIR}${NC}"
     echo -e "${GREEN}ROC data saved to ${ROC_DATA_DIR}${NC}"
     
-    # If there are PNG files in the results directory, show them
-    roc_plots=$(find "$RESULTS_DIR" -name "*_roc.png")
+    # Look for the specific ROC plot that was just generated
+    roc_plots=$(find "$RESULTS_DIR" -name "${csv_algorithm_name}_*_roc.png")
     if [ -n "$roc_plots" ]; then
-        echo -e "${GREEN}Generated ROC plots:${NC}"
+        echo -e "${GREEN}Generated ROC plot:${NC}"
         for plot in $roc_plots; do
             echo "  - $plot"
             if [ -n "$DISPLAY" ] && command -v xdg-open &> /dev/null; then
