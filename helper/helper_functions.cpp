@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <limits> 
 #include <map>
+#include <iomanip>
+#include <numeric>
 
 using namespace std;
 
@@ -263,6 +265,101 @@ map<string, double> evaluateAlgorithm(
 }
 
 /**
+ * Print basic dataset and algorithm score information.
+ * 
+ * @param csvData The dataset loaded from CSV (vector of string vectors)
+ * @param scores Algorithm prediction scores
+ * @param labels True binary labels for the dataset
+ * @param anomalyColumnIndex Column index containing anomaly labels (default: 1)
+ * @param algorithm_name Name of the algorithm for display purposes
+ */
+void printBasicInfo(
+    const vector<vector<string>>& csvData,
+    const vector<double>& scores,
+    const vector<bool>& labels,
+    int anomalyColumnIndex,
+    const string& algorithm_name) 
+{
+    cout << "\n===== " << algorithm_name << " Dataset & Score Analysis =====\n";
+    
+    // Basic dataset information
+    cout << "Dataset Information:\n";
+    cout << "  Total samples: " << csvData.size() << endl;
+    
+    // Count anomalies and normal samples from labels
+    int anomalyCount = 0, normalCount = 0;
+    for (bool label : labels) {
+        if (label) anomalyCount++;
+        else normalCount++;
+    }
+    
+    cout << "  Anomaly samples: " << anomalyCount << endl;
+    cout << "  Normal samples: " << normalCount << endl;
+    
+    if (csvData.size() > 0) {
+        cout << "  Features per sample: " << csvData[0].size() << endl;
+        
+        // Calculate anomaly percentage
+        double anomalyPercentage = (double)anomalyCount / csvData.size() * 100.0;
+        cout << "  Anomaly percentage: " << fixed << setprecision(1) << anomalyPercentage << "%" << endl;
+    }
+    
+    // Score analysis
+    if (scores.size() > 0) {
+        cout << "\nScore Statistics:\n";
+        
+        // Overall score statistics
+        double minScore = *min_element(scores.begin(), scores.end());
+        double maxScore = *max_element(scores.begin(), scores.end());
+        double avgScore = accumulate(scores.begin(), scores.end(), 0.0) / scores.size();
+        
+        cout << "  Score range: [" << fixed << setprecision(6) << minScore 
+             << ", " << maxScore << "]" << endl;
+        cout << "  Average score: " << avgScore << endl;
+        
+        // Separate statistics for anomaly vs normal samples
+        double avgAnomalyScore = 0.0, avgNormalScore = 0.0;
+        int anomalyScoreCount = 0, normalScoreCount = 0;
+        
+        for (size_t i = 0; i < scores.size() && i < labels.size(); i++) {
+            if (labels[i]) {
+                avgAnomalyScore += scores[i];
+                anomalyScoreCount++;
+            } else {
+                avgNormalScore += scores[i];
+                normalScoreCount++;
+            }
+        }
+        
+        if (anomalyScoreCount > 0) {
+            avgAnomalyScore /= anomalyScoreCount;
+            cout << "  Average anomaly score: " << avgAnomalyScore << endl;
+        }
+        
+        if (normalScoreCount > 0) {
+            avgNormalScore /= normalScoreCount;
+            cout << "  Average normal score: " << avgNormalScore << endl;
+        }
+        
+        // Score separation analysis
+        if (anomalyScoreCount > 0 && normalScoreCount > 0) {
+            double scoreSeparation = avgAnomalyScore - avgNormalScore;
+            cout << "  Score separation (anomaly - normal): " << scoreSeparation << endl;
+            
+            if (scoreSeparation > 0) {
+                cout << "  -> Good: Anomalies have higher scores than normal samples" << endl;
+            } else if (scoreSeparation < 0) {
+                cout << "  -> Note: Normal samples have higher scores than anomalies" << endl;
+            } else {
+                cout << "  -> Warning: No score separation between classes" << endl;
+            }
+        }
+    }
+    
+    cout << "================================================\n";
+}
+
+/**
  * Print evaluation results in a formatted way.
  * 
  * @param results Map of evaluation metrics
@@ -293,14 +390,36 @@ void printEvaluationResults(const map<string, double>& results, bool showPercent
     
     for (const auto& metric : metricsToShow) {
         if (results.count(metric)) {
-            cout << metric << ": ";
+            cout << "  " << metric << ": ";
             if (showPercentages && metric != "auc") {
-                cout << results.at(metric) * 100 << "%";
+                cout << fixed << setprecision(2) << results.at(metric) * 100 << "%";
             } else {
-                cout << results.at(metric);
+                cout << fixed << setprecision(4) << results.at(metric);
             }
             cout << endl;
         }
+    }
+    
+    // Print AUC if available
+    if (results.count("auc")) {
+        cout << "  auc: " << fixed << setprecision(4) << results.at("auc") << endl;
+    }
+    
+    // Additional performance insights
+    if (results.count("true_positives") && results.count("false_positives") && 
+        results.count("true_negatives") && results.count("false_negatives")) {
+        
+        int tp = static_cast<int>(results.at("true_positives"));
+        int fp = static_cast<int>(results.at("false_positives"));
+        int tn = static_cast<int>(results.at("true_negatives"));
+        int fn = static_cast<int>(results.at("false_negatives"));
+        
+        cout << "\nPerformance Insights:\n";
+        cout << "  Total correctly classified: " << (tp + tn) << " out of " << (tp + fp + tn + fn) << endl;
+        cout << "  False positive rate: " << fixed << setprecision(2) 
+             << (fp + tn > 0 ? (double)fp / (fp + tn) * 100 : 0.0) << "%" << endl;
+        cout << "  False negative rate: " << fixed << setprecision(2) 
+             << (tp + fn > 0 ? (double)fn / (tp + fn) * 100 : 0.0) << "%" << endl;
     }
     
     cout << "=======================================\n";
@@ -308,6 +427,7 @@ void printEvaluationResults(const map<string, double>& results, bool showPercent
 
 /**
  * Read a CSV file and return its contents as a vector of vectors of strings.
+ * Usable but unnecessary at the moment because of ARM compilation of CSV files.
  * 
  * @param headerRow Whether the CSV has a header row to skip
  * @param filename Name of the CSV file to read
@@ -363,7 +483,7 @@ vector<vector<string>> readCSV(bool headerRow, const string& filename) { //const
 vector<vector<string>> readEmbeddedDataset(bool headerRow, const string& filename = "") {
     vector<vector<string>> data;
     
-    cout << "Using embedded dataset with " << DataArrays::NUM_ROWS << " rows and " 
+    cout << "Using dataset with " << DataArrays::NUM_ROWS << " rows and " 
          << DataArrays::NUM_COLS << " columns" << endl;
     
     // Convert embedded data to the same format as readCSV

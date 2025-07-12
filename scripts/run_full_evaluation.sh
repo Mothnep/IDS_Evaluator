@@ -197,6 +197,83 @@ evaluate_algorithm() {
     return 0
 }
 
+# Function for ARM cross-compilation
+compile_for_arm() {
+    local algo_file="$1"
+    shift # Remove first argument
+    local algo_name=$(basename "$algo_file" .cpp)
+    
+    print_header "ARM Cross-Compilation for $algo_name"
+    
+    # Check if ARM cross-compiler is available
+    if ! command -v arm-linux-gnueabi-g++ &> /dev/null; then
+        echo -e "${RED}Warning: ARM cross-compiler (arm-linux-gnueabi-g++) not found${NC}"
+        echo -e "${RED}Skipping ARM compilation. To install:${NC}"
+        echo -e "${RED}  sudo apt-get install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi${NC}"
+        return 1
+    fi
+    
+    # Create ARM output directory
+    local arm_exe_dir="$ALGORITHMS_DIR/exe/ARM"
+    mkdir -p "$arm_exe_dir"
+    
+    # Define ARM output binary
+    local arm_executable="${arm_exe_dir}/${algo_name}_arm"
+    
+    # Always include helper functions and dataset array
+    local lib_files="$TOOL_DIR/helper/helper_functions.cpp"
+    local include_paths="-I$TOOL_DIR"
+    
+    # Process each provided library path (same logic as regular compilation)
+    for lib_path in "$@"; do
+        echo -e "${GREEN}Adding library for ARM compilation: $lib_path${NC}"
+        
+        # Check if it's a directory
+        if [ -d "$lib_path" ]; then
+            # Find all .cpp files in this directory (excluding main.cpp to avoid conflicts)
+            local cpp_files=$(find "$lib_path" -name "*.cpp" -not -name "main.cpp" -not -path "*/test*" -not -path "*/example*")
+            for cpp_file in $cpp_files; do
+                echo -e "  - Including source: $(basename "$cpp_file")"
+                lib_files="$lib_files $cpp_file"
+            done
+            include_paths="$include_paths -I$lib_path"
+        elif [ -f "$lib_path" ] && [[ "$lib_path" == *.cpp ]]; then
+            # It's a single cpp file
+            echo -e "  - Including source: $(basename "$lib_path")"
+            lib_files="$lib_files $lib_path"
+            # Add its directory to include paths
+            include_paths="$include_paths -I$(dirname "$lib_path")"
+        fi
+    done
+    
+    # ARM compilation flags (based on compile_binary.sh)
+    local arm_compiler="arm-linux-gnueabi-g++"
+    local arm_flags="-std=c++17 -Wall -O2 -static -march=armv7-a -mfloat-abi=soft -fno-stack-protector -fno-pie -no-pie"
+    
+    # Compile for ARM
+    echo -e "${GREEN}Compiling for ARM with dependencies...${NC}"
+    echo "$arm_compiler $arm_flags $algo_file $lib_files -o $arm_executable $include_paths"
+    $arm_compiler $arm_flags $algo_file $lib_files -o "$arm_executable" $include_paths
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}ARM compilation failed!${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}ARM compilation successful!${NC}"
+    
+    # Show binary information
+    echo -e "\n${GREEN}ARM Binary Information:${NC}"
+    if command -v file &> /dev/null; then
+        file "$arm_executable"
+    fi
+    ls -lh "$arm_executable"
+    
+    echo -e "${GREEN}ARM binary saved to: $arm_executable${NC}"
+    
+    return 0
+}
+
 # Main script execution starts here
 
 # Setup Python virtual environment first thing
@@ -285,4 +362,23 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     
     # Run the evaluation with libraries
     evaluate_algorithm "$algorithm_file" "${lib_paths[@]}"
+    
+    # After successful evaluation, compile for ARM
+    if [ $? -eq 0 ]; then
+        echo -e "\n${BLUE}Evaluation completed successfully. Proceeding with ARM compilation...${NC}"
+        compile_for_arm "$algorithm_file" "${lib_paths[@]}"
+        
+        if [ $? -eq 0 ]; then
+            print_header "Full Evaluation and Compilation Complete"
+            echo -e "${GREEN}✓ Dataset conversion completed${NC}"
+            echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
+            echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
+            echo -e "${GREEN}✓ Results and binaries saved${NC}"
+        else
+            echo -e "${RED}ARM compilation failed, but evaluation was successful${NC}"
+        fi
+    else
+        echo -e "${RED}Evaluation failed. Skipping ARM compilation.${NC}"
+        exit 1
+    fi
 fi

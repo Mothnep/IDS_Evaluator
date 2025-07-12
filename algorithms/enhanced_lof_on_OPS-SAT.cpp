@@ -72,9 +72,9 @@ int main() {
         varDivLen.push_back(stod(row[22]));     // var_div_len
     }
     
-    cout << "Loaded " << isAnomaly.size() << " samples" << endl;
-    cout << "Anomalies: " << count(isAnomaly.begin(), isAnomaly.end(), true) << endl;
-    cout << "Normal: " << count(isAnomaly.begin(), isAnomaly.end(), false) << endl;
+    // Print basic dataset information
+    // Note: We'll call printBasicInfo again later with algorithm scores
+    printBasicInfo(csvData, {}, isAnomaly, 1, "Enhanced LOF - Initial Dataset");
     
     // Normalize ALL features to prevent any single feature from dominating
     cout << "\nNormalizing features..." << endl;
@@ -150,6 +150,9 @@ int main() {
     }
     
     cout << "LOF calculation complete!" << endl;
+    
+    // Show detailed score analysis using the helper function
+    printBasicInfo(csvData, anomalyScores, isAnomaly, 1, "Enhanced LOF - Score Analysis");
     
     // Analyze score distribution before normalization
     double minScore = *min_element(anomalyScores.begin(), anomalyScores.end());
