@@ -247,7 +247,7 @@
 			<component id="system.core0.icache" name="icache">
 				<!-- there is no write requests to itlb although writes happen to it after miss, 
 				which is actually a replacement -->
-				<param name="icache_config" value="49152,64,3,1,10,2,64,0"/>
+				<param name="icache_config" value="49152,64,2,1,10,2,64,0"/>
 				<!-- the parameters are capacity,block_width, associativity, bank, throughput w.r.t. core clock, latency w.r.t. core clock,output_width, cache policy,  -->
 				<!-- cache_policy;//0 no write or write-though with non-write allocate;1 write-back with write-allocate -->
 				<param name="buffer_sizes" value="8,8,8,4"/>

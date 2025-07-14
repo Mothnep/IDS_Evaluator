@@ -11,6 +11,7 @@ import argparse
 import sys
 import json
 import re
+import math
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
 import copy
@@ -24,6 +25,33 @@ def debug_print(*args, **kwargs):
     """Print debug messages only if DEBUG is True"""
     if DEBUG:
         print(*args, **kwargs)
+
+def fix_associativity(assoc_value):
+    """
+    Fix associativity to be a power of 2 as required by McPAT.
+    If the value is not a power of 2, round to the nearest power of 2.
+    """
+    import math
+    
+    if assoc_value <= 0:
+        return 1
+    
+    # Check if it's already a power of 2
+    if assoc_value & (assoc_value - 1) == 0:
+        return assoc_value
+    
+    # Find the nearest power of 2
+    lower_power = 2 ** int(math.log2(assoc_value))
+    upper_power = lower_power * 2
+    
+    # Choose the closer one
+    if abs(assoc_value - lower_power) <= abs(assoc_value - upper_power):
+        result = lower_power
+    else:
+        result = upper_power
+    
+    print(f"Warning: Associativity {assoc_value} is not a power of 2. Using {result} instead.")
+    return result
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -431,7 +459,7 @@ def prepareTemplate(outputFile):
         # Build the icache_config string after extracting individual values
         iSize = icache_params.get('size', 32768)  # Default to 32768 if not found
         i_block_size = icache_params.get('block_size', 64)  # Default to 64 if not found  
-        iAssociativity = icache_params.get('associativity', 2)  # Default to 2 if not found
+        iAssociativity = fix_associativity(icache_params.get('associativity', 2))  # Fix to power of 2
         i_response_latency = icache_params.get('response_latency', 2)  # Default to 2 if not found
         icache_params['icache_config'] = f"{iSize},{i_block_size},{iAssociativity},1,10,{i_response_latency},{i_block_size},0"
 
@@ -451,10 +479,10 @@ def prepareTemplate(outputFile):
             'write_buffers': cpu.get("dcache", {}).get("write_buffers", 8),
             'buffer_sizes': None
         }
-        # Build the icache_config string after extracting individual values
+        # Build the dcache_config string after extracting individual values
         dSize = dcache_params.get('size', 32768)  # Default to 32768 if not found
         d_block_size = dcache_params.get('block_size', 64)  # Default to 64 if not found  
-        dAssociativity = dcache_params.get('assoc', 2)  # Default to 2 if not found
+        dAssociativity = fix_associativity(dcache_params.get('assoc', 2))  # Fix to power of 2
         d_response_latency = dcache_params.get('response_latency', 2)  # Default to 2 if not found
         dcache_params['dcache_config'] = f"{dSize},{d_block_size},{dAssociativity},1,10,{d_response_latency},{d_block_size},0"
 
@@ -485,7 +513,7 @@ def prepareTemplate(outputFile):
         }
         l2_size = l2_params.get('size', 262144)  # Default to 262144 if not found
         l2_block_size = l2_params.get('block_size', 64)  # Default to 64 if not found
-        l2_assoc = l2_params.get('assoc', 8)  # Default to 8 if not found
+        l2_assoc = fix_associativity(l2_params.get('assoc', 8))  # Fix to power of 2
         l2_latency = l2_params.get('latency', 10)  # Default to 10 if not found
         l2_params['l2_config'] = f"{l2_size},{l2_block_size},{l2_assoc},8,8,{l2_latency},{l2_block_size},0"
 
