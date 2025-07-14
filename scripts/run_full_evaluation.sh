@@ -361,6 +361,117 @@ run_gem5_simulation() {
     return 0
 }
 
+# Function for McPAT power analysis
+run_mcpat_analysis() {
+    local algo_name="$1"
+    
+    print_header "McPAT Power Analysis for $algo_name"
+    
+    # Check if Docker is available
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Warning: Docker not found. Skipping McPAT analysis.${NC}"
+        return 1
+    fi
+    
+    # Check if mcpat:v1.3.0 image exists
+    if ! docker image inspect mcpat:v1.3.0 &> /dev/null; then
+        echo -e "${RED}Warning: mcpat:v1.3.0 Docker image not found.${NC}"
+        echo -e "${RED}Please build the McPAT Docker image first:${NC}"
+        echo -e "${RED}  cd $TOOL_DIR/simulators/mcpat${NC}"
+        echo -e "${RED}  docker build -t mcpat:v1.3.0 .${NC}"
+        return 1
+    fi
+    
+    # Define paths
+    local gem5_results_dir="$TOOL_DIR/simulators/gem5_latest/results"
+    local parser_dir="$TOOL_DIR/simulators/parser"
+    local parser_results_dir="$parser_dir/results"
+    local config_file="$gem5_results_dir/config.json"
+    local stats_file="$gem5_results_dir/stats.txt"
+    local template_file="$parser_dir/templates/ARM_O3.xml"
+    local mcpat_input_file="$parser_results_dir/mcpat-in.xml"
+    local parser_script="$parser_dir/parser.py"
+    
+    # Check if gem5 results exist
+    if [ ! -f "$config_file" ]; then
+        echo -e "${RED}Error: gem5 config.json not found: $config_file${NC}"
+        echo -e "${RED}Please ensure gem5 simulation completed successfully.${NC}"
+        return 1
+    fi
+    
+    if [ ! -f "$stats_file" ]; then
+        echo -e "${RED}Error: gem5 stats.txt not found: $stats_file${NC}"
+        echo -e "${RED}Please ensure gem5 simulation completed successfully.${NC}"
+        return 1
+    fi
+    
+    # Check if parser files exist
+    if [ ! -f "$parser_script" ]; then
+        echo -e "${RED}Error: Parser script not found: $parser_script${NC}"
+        return 1
+    fi
+    
+    if [ ! -f "$template_file" ]; then
+        echo -e "${RED}Error: McPAT template not found: $template_file${NC}"
+        return 1
+    fi
+    
+    # Create parser results directory
+    mkdir -p "$parser_results_dir"
+    
+    # Run the parser to generate McPAT input
+    print_header "Parsing gem5 Results"
+    echo -e "${GREEN}Running parser to convert gem5 results to McPAT format...${NC}"
+    
+    cd "$parser_dir"
+    run_python_script "$parser_script" \
+        -c "$config_file" \
+        -s "$stats_file" \
+        -t "$template_file" \
+        -o "$mcpat_input_file" \
+        --verbose
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Parser failed to generate McPAT input!${NC}"
+        cd "$TOOL_DIR"
+        return 1
+    fi
+    
+    # Check if McPAT input was generated
+    if [ ! -f "$mcpat_input_file" ]; then
+        echo -e "${RED}Error: McPAT input file was not generated: $mcpat_input_file${NC}"
+        cd "$TOOL_DIR"
+        return 1
+    fi
+    
+    echo -e "${GREEN}McPAT input file generated successfully: $mcpat_input_file${NC}"
+    
+    # Run McPAT analysis
+    print_header "Running McPAT Power Analysis"
+    echo -e "${GREEN}Running McPAT power and area analysis...${NC}"
+    
+    docker run --rm \
+        -v "$parser_results_dir:/data" \
+        mcpat:v1.3.0 \
+        ./mcpat -infile /data/mcpat-in.xml -print_level 2
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}McPAT analysis failed!${NC}"
+        cd "$TOOL_DIR"
+        return 1
+    fi
+    
+    echo -e "${GREEN}McPAT power analysis completed successfully!${NC}"
+    
+    # Copy McPAT input to results directory for reference
+    local algorithm_results_mcpat="$RESULTS_DIR/mcpat-${algo_name}.xml"
+    cp "$mcpat_input_file" "$algorithm_results_mcpat"
+    echo -e "${GREEN}McPAT input file copied to: $algorithm_results_mcpat${NC}"
+    
+    cd "$TOOL_DIR"
+    return 0
+}
+
 # Main script execution starts here
 
 # Setup Python virtual environment first thing
@@ -471,17 +582,32 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             run_gem5_simulation "$algo_name" "$gem5_config_name"
             
             if [ $? -eq 0 ]; then
-                print_header "Full Evaluation Pipeline Complete"
-                echo -e "${GREEN}✓ Dataset conversion completed${NC}"
-                echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
-                echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
-                echo -e "${GREEN}✓ gem5 simulation completed${NC}"
-                echo -e "${GREEN}✓ All results and binaries saved${NC}"
-                echo -e "\n${GREEN}Results locations:${NC}"
-                echo -e "  - Algorithm results: $RESULTS_DIR${NC}"
-                echo -e "  - ROC data: $ROC_DATA_DIR${NC}"
-                echo -e "  - ARM binary: $ALGORITHMS_DIR/exe/ARM/${algo_name}_arm${NC}"
-                echo -e "  - gem5 results: $TOOL_DIR/simulators/gem5_latest/results${NC}"
+                echo -e "\n${BLUE}gem5 simulation completed successfully. Proceeding with McPAT power analysis...${NC}"
+                run_mcpat_analysis "$algo_name"
+                
+                if [ $? -eq 0 ]; then
+                    print_header "Full Evaluation Pipeline Complete"
+                    echo -e "${GREEN}✓ Dataset conversion completed${NC}"
+                    echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
+                    echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
+                    echo -e "${GREEN}✓ gem5 simulation completed${NC}"
+                    echo -e "${GREEN}✓ McPAT power analysis completed${NC}"
+                    echo -e "${GREEN}✓ All results and binaries saved${NC}"
+                    echo -e "\n${GREEN}Results locations:${NC}"
+                    echo -e "  - Algorithm results: $RESULTS_DIR${NC}"
+                    echo -e "  - ROC data: $ROC_DATA_DIR${NC}"
+                    echo -e "  - ARM binary: $ALGORITHMS_DIR/exe/ARM/${algo_name}_arm${NC}"
+                    echo -e "  - gem5 results: $TOOL_DIR/simulators/gem5_latest/results${NC}"
+                    echo -e "  - McPAT input: $RESULTS_DIR/mcpat-${algo_name}.xml${NC}"
+                else
+                    echo -e "${RED}McPAT analysis failed, but gem5 simulation was successful${NC}"
+                    print_header "Partial Pipeline Complete"
+                    echo -e "${GREEN}✓ Dataset conversion completed${NC}"
+                    echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
+                    echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
+                    echo -e "${GREEN}✓ gem5 simulation completed${NC}"
+                    echo -e "${RED}✗ McPAT power analysis failed${NC}"
+                fi
             else
                 echo -e "${RED}gem5 simulation failed, but ARM compilation was successful${NC}"
             fi
