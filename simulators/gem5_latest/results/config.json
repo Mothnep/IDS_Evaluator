@@ -1728,7 +1728,7 @@
                         "name": "workload",
                         "path": "system.cpu.workload",
                         "cmd": [
-                            "/simulator_configs/gem5/ARM/iforest_embedded_arm"
+                            "/algorithm_binaries/lightweight_lof_on_OPS-SAT_arm"
                         ],
                         "cwd": "/gem5",
                         "drivers": [],
@@ -1737,7 +1737,7 @@
                         "errout": "cerr",
                         "euid": 100,
                         "eventq_index": 0,
-                        "executable": "/simulator_configs/gem5/ARM/iforest_embedded_arm",
+                        "executable": "/algorithm_binaries/lightweight_lof_on_OPS-SAT_arm",
                         "gid": 100,
                         "input": "cin",
                         "kvmInSE": false,

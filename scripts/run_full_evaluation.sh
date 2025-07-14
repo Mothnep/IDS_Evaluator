@@ -274,6 +274,93 @@ compile_for_arm() {
     return 0
 }
 
+# Function for gem5 simulation
+run_gem5_simulation() {
+    local algo_name="$1"
+    local gem5_config_name="$2"
+    
+    print_header "gem5 Simulation for $algo_name"
+    
+    # Check if Docker is available
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Warning: Docker not found. Skipping gem5 simulation.${NC}"
+        echo -e "${RED}To install Docker: https://docs.docker.com/get-docker/${NC}"
+        return 1
+    fi
+    
+    # Check if gem5:latest image exists
+    if ! docker image inspect gem5:latest &> /dev/null; then
+        echo -e "${RED}Warning: gem5:latest Docker image not found.${NC}"
+        echo -e "${RED}Please build the gem5 Docker image first:${NC}"
+        echo -e "${RED}  cd $TOOL_DIR/simulators/gem5_latest${NC}"
+        echo -e "${RED}  docker build -t gem5:latest .${NC}"
+        return 1
+    fi
+    
+    # Define paths
+    local arm_exe_dir="$ALGORITHMS_DIR/exe/ARM"
+    local sim_configs_dir="$TOOL_DIR/simulators/simulator_configs"
+    local gem5_results_dir="$TOOL_DIR/simulators/gem5_latest/results"
+    local sim_config_file="$sim_configs_dir/gem5/ARM/simulation_config.json"
+    local update_script="$TOOL_DIR/helper/update_sim_config.py"
+    
+    # Check if ARM binary exists
+    local arm_binary="${arm_exe_dir}/${algo_name}_arm"
+    if [ ! -f "$arm_binary" ]; then
+        echo -e "${RED}Error: ARM binary not found: $arm_binary${NC}"
+        echo -e "${RED}Please ensure ARM compilation completed successfully.${NC}"
+        return 1
+    fi
+    
+    # Create results directory if it doesn't exist
+    mkdir -p "$gem5_results_dir"
+    
+    # Update simulation configuration with correct binary path
+    echo -e "${GREEN}Updating simulation configuration...${NC}"
+    run_python_script "$update_script" "$sim_config_file" "$algo_name" --config-name "$gem5_config_name"
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to update simulation configuration${NC}"
+        return 1
+    fi
+    
+    # Run gem5 simulation in Docker
+    echo -e "${GREEN}Starting gem5 simulation with configuration: $gem5_config_name${NC}"
+    echo -e "${GREEN}This may take several minutes...${NC}"
+    
+    docker run --rm -it \
+        -v "$sim_configs_dir:/simulator_configs" \
+        -v "$gem5_results_dir:/gem5/m5out" \
+        -v "$arm_exe_dir:/algorithm_binaries" \
+        gem5:latest \
+        /gem5/build/ARM/gem5.opt /simulator_configs/gem5/ARM/run_config.py \
+        --config /simulator_configs/gem5/ARM/simulation_config.json \
+        --config-name "$gem5_config_name"
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}gem5 simulation failed!${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}gem5 simulation completed successfully!${NC}"
+    
+    # Show generated output files
+    if [ -d "$gem5_results_dir" ]; then
+        echo -e "\n${GREEN}Generated simulation files:${NC}"
+        ls -la "$gem5_results_dir"
+        
+        # Check for key output files
+        if [ -f "$gem5_results_dir/stats.txt" ]; then
+            echo -e "${GREEN}✓ Statistics file: $gem5_results_dir/stats.txt${NC}"
+        fi
+        if [ -f "$gem5_results_dir/config.json" ]; then
+            echo -e "${GREEN}✓ Configuration file: $gem5_results_dir/config.json${NC}"
+        fi
+    fi
+    
+    return 0
+}
+
 # Main script execution starts here
 
 # Setup Python virtual environment first thing
@@ -288,10 +375,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     
     # Check if at least one argument is provided
     if [ $# -eq 0 ]; then
-        echo "Usage: $0 <algorithm_file.cpp> [--data dataset.csv] [--lib library_path [--lib library_path] ...]"
-        echo "Example: $0 enhanced_lof_on_OPS-SAT.cpp --data OPS-SAT-AD/data/dataset.csv"
+        echo "Usage: $0 <algorithm_file.cpp> [--data dataset.csv] [--lib library_path [--lib library_path] ...] [--config gem5_config_name]"
+        echo "Examples:"
+        echo "         $0 enhanced_lof_on_OPS-SAT.cpp --data OPS-SAT-AD/data/dataset.csv"
+        echo "         $0 enhanced_lof_on_OPS-SAT.cpp --data OPS-SAT-AD/data/dataset.csv --config cortex_a72"
         echo "         $0 Iforets_on_OPS-SAT.cpp --data OPS-SAT-AD/data/dataset.csv --lib LibIsolationForest/cpp"
-        echo "         $0 Iforets_on_OPS-SAT.cpp --lib lib/LibIsolationForest/cpp"
+        echo "         $0 Iforets_on_OPS-SAT.cpp --lib lib/LibIsolationForest/cpp --config default"
+        echo ""
+        echo "Available gem5 configurations: default, cortex_a72"
         exit 1
     fi
     
@@ -309,9 +400,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         exit 1
     fi
     
-    # Parse remaining arguments for dataset and libraries
+    # Parse remaining arguments for dataset, libraries, and gem5 config
     lib_paths=()
     dataset_file=""
+    gem5_config_name="default"  # Default gem5 configuration
     
     while [ $# -gt 0 ]; do
         if [ "$1" == "--data" ] && [ $# -gt 1 ]; then
@@ -338,6 +430,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             fi
             lib_paths+=("$lib_path")
             shift 2 # Remove --lib and its value
+        elif [ "$1" == "--config" ] && [ $# -gt 1 ]; then
+            gem5_config_name="$2"
+            shift 2 # Remove --config and its value
         else
             echo -e "${RED}Error: Unknown argument or missing value: $1${NC}"
             exit 1
@@ -369,16 +464,32 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         compile_for_arm "$algorithm_file" "${lib_paths[@]}"
         
         if [ $? -eq 0 ]; then
-            print_header "Full Evaluation and Compilation Complete"
-            echo -e "${GREEN}✓ Dataset conversion completed${NC}"
-            echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
-            echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
-            echo -e "${GREEN}✓ Results and binaries saved${NC}"
+            echo -e "\n${BLUE}ARM compilation completed successfully. Proceeding with gem5 simulation...${NC}"
+            
+            # Extract algorithm name for gem5 simulation
+            algo_name=$(basename "$algorithm_file" .cpp)
+            run_gem5_simulation "$algo_name" "$gem5_config_name"
+            
+            if [ $? -eq 0 ]; then
+                print_header "Full Evaluation Pipeline Complete"
+                echo -e "${GREEN}✓ Dataset conversion completed${NC}"
+                echo -e "${GREEN}✓ Algorithm evaluation completed${NC}"
+                echo -e "${GREEN}✓ ARM cross-compilation completed${NC}"
+                echo -e "${GREEN}✓ gem5 simulation completed${NC}"
+                echo -e "${GREEN}✓ All results and binaries saved${NC}"
+                echo -e "\n${GREEN}Results locations:${NC}"
+                echo -e "  - Algorithm results: $RESULTS_DIR${NC}"
+                echo -e "  - ROC data: $ROC_DATA_DIR${NC}"
+                echo -e "  - ARM binary: $ALGORITHMS_DIR/exe/ARM/${algo_name}_arm${NC}"
+                echo -e "  - gem5 results: $TOOL_DIR/simulators/gem5_latest/results${NC}"
+            else
+                echo -e "${RED}gem5 simulation failed, but ARM compilation was successful${NC}"
+            fi
         else
             echo -e "${RED}ARM compilation failed, but evaluation was successful${NC}"
         fi
     else
-        echo -e "${RED}Evaluation failed. Skipping ARM compilation.${NC}"
+        echo -e "${RED}Evaluation failed. Skipping ARM compilation and gem5 simulation.${NC}"
         exit 1
     fi
 fi
