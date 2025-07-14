@@ -1,11 +1,10 @@
 {
   "configurations": {
-
     "default": {
       "system": {
         "mem_mode": "timing",
         "clock_domain": {
-          "clock": "2GHz",
+          "clock": "4GHz",
           "voltage_domain": {
             "voltage": "2.0V"
           }
@@ -13,7 +12,56 @@
       },
       "cpu": {
         "type": "O3CPU",
-        "num_cores": 2,
+        "num_cores": 1,
+        "branch_prediction": {
+          "enabled": false
+        }
+      },
+      "memory": {
+        "override_gem5_data": false,
+        "dram": {
+          "type": "DDR3_1600_8x8",
+          "ranks_per_channel": 1,
+          "channels": 1,
+          "size": "512MB"
+        }
+      },
+      "cache_hierarchy": {
+        "l1i": {
+          "size": "16kB",
+          "assoc": 1
+        },
+        "l1d": {
+          "size": "16kB",
+          "assoc": 1
+        },
+        "l2": {
+          "size": "256kB",
+          "assoc": 4,
+          "tag_latency": 10,
+          "data_latency": 10,
+          "response_latency": 10,
+          "mshrs": 10,
+          "tgts_per_mshr": 8
+        }
+      },
+      "process": {
+        "binary": "/algorithm_binaries/enhanced_lof_on_OPS-SAT_arm"
+      }
+    },
+    "cortex_a72": {
+      "system": {
+        "mem_mode": "timing",
+        "clock_domain": {
+          "clock": "1.8GHz",
+          "voltage_domain": {
+            "voltage": "1.0V"
+          }
+        }
+      },
+      "cpu": {
+        "type": "O3CPU",
+        "num_cores": 1,
         "branch_prediction": {
           "enabled": true,
           "predictor_type": "tournament"
@@ -22,24 +70,16 @@
       "memory": {
         "override_gem5_data": false,
         "dram": {
-          "type": "DDR3_1600_8x8",
-          "ranks_per_channel": 2,
-          "channels": 2,
+          "type": "DDR4_2400_8x8",
+          "ranks_per_channel": 1,
+          "channels": 1,
           "size": "2GB"
         }
-        
       },
       "cache_hierarchy": {
-        "l1": {
-          "tag_latency": 2,
-          "data_latency": 2,
-          "response_latency": 2,
-          "mshrs": 4,
-          "tgts_per_mshr": 20
-        },
         "l1i": {
-          "size": "32kB",
-          "assoc": 2
+          "size": "48kB",
+          "assoc": 3
         },
         "l1d": {
           "size": "32kB",
@@ -47,16 +87,16 @@
         },
         "l2": {
           "size": "1MB",
-          "assoc": 8,
-          "tag_latency": 20,
-          "data_latency": 20,
-          "response_latency": 20,
-          "mshrs": 20,
+          "assoc": 16,
+          "tag_latency": 12,
+          "data_latency": 12,
+          "response_latency": 12,
+          "mshrs": 16,
           "tgts_per_mshr": 12
         }
       },
       "process": {
-        "binary": "/home/mothnep/Desktop/IDS_evaluation_tool/simulators/gem5/tests/test-progs/hello/bin/arm/linux/hello"
+        "binary": "/algorithm_binaries/lightweight_lof_on_OPS-SAT_arm"
       }
     }
   }

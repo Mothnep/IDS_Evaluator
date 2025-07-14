@@ -67,6 +67,26 @@ map<string, double> evaluateAlgorithm(
     double threshold = -1);
 
 /**
+ * Print comprehensive dataset and algorithm score information.
+ * This function provides detailed insights including:
+ * - Dataset statistics (total samples, anomaly/normal counts, percentages)
+ * - Score statistics (min/max/average scores for all, anomaly, and normal samples)
+ * - Score separation analysis and quality assessment
+ * 
+ * @param csvData The dataset loaded from CSV (vector of string vectors)
+ * @param scores Algorithm prediction scores (can be empty for dataset-only analysis)
+ * @param labels True binary labels for the dataset
+ * @param anomalyColumnIndex Column index containing anomaly labels (default: 1)
+ * @param algorithm_name Name of the algorithm for display purposes
+ */
+void printBasicInfo(
+    const vector<vector<string>>& csvData,
+    const vector<double>& scores,
+    const vector<bool>& labels,
+    int anomalyColumnIndex = 1,
+    const string& algorithm_name = "Algorithm");
+
+/**
  * Print evaluation results in a formatted way.
  * 
  * @param results Map of evaluation metrics
@@ -84,4 +104,15 @@ void printEvaluationResults(
  * @return Vector of string vectors representing the CSV rows
  */
 vector<vector<string>> readCSV(bool headerRow, const string& filename);
+
+/**
+ * Read embedded dataset and return its contents as a vector of vectors of strings.
+ * This is a drop-in replacement for readCSV that uses embedded C++ arrays.
+ * 
+ * @param headerRow Whether to include headers (ignored for compatibility)
+ * @param filename Filename (ignored for compatibility) 
+ * @return Vector of string vectors representing the dataset rows
+ */
+vector<vector<string>> readEmbeddedDataset(bool headerRow = true, const string& filename = "");
+
 #endif // HELPER_FCTS_H
