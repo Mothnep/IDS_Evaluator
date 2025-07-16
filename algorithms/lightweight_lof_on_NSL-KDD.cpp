@@ -33,7 +33,7 @@ vector<double> normalizeFeature(const vector<double> &feature)
         }
         else
         {
-            normalized.push_back(0.0);
+            normalized.push_back(0.0); // All values are the same
         }
     }
     return normalized;
@@ -41,9 +41,9 @@ vector<double> normalizeFeature(const vector<double> &feature)
 
 int main()
 {
-    cout << "=== Lightweight LOF for gem5 Simulation ===" << endl;
+    cout << "=== Lightweight LOF for NSL-KDD Dataset ===" << endl;
 
-    vector<vector<string>> csvData = readEmbeddedDataset(true);
+    vector<vector<string>> csvData = readEmbeddedDataset(false); // No header for NSL-KDD
 
     // Use only a subset of data for faster simulation
     const size_t MAX_SAMPLES = 200;                                // Reduced from 2000 to 200
@@ -52,45 +52,64 @@ int main()
     vector<vector<double>> features; // will be filled after normalization
     vector<bool> isAnomaly;
 
-    // Extract only the most important features (reduced from 19 to 5)
-    vector<double> means, vars, stds, kurts, skews;
+    // Extract only the most important numerical features (8 features for better discrimination)
+    // NSL-KDD has 43 columns: 0-40 are features, 41 is attack type, 42 is anomaly label
+    vector<double> duration, src_bytes, dst_bytes, wrong_fragment, urgent, hot, num_failed_logins, num_compromised;
 
+    // Process all samples to demonstrate imbalanced dataset effects
     for (size_t idx = 0; idx < actualSamples && idx < csvData.size(); idx++)
     {
         const auto &row = csvData[idx];
-        if (row.size() < 22)
+        if (row.size() < 43)
             continue;
 
-        isAnomaly.push_back(row[1] == "1"); // if value is 1 then pushBack "1"
-
-        // Use only 5 most discriminative features
-        means.push_back(stod(row[7]));  // mean
-        vars.push_back(stod(row[8]));   // var
-        stds.push_back(stod(row[9]));   // std
-        kurts.push_back(stod(row[10])); // kurtosis
-        skews.push_back(stod(row[11])); // skew
+        // Last column (index 42) contains anomaly labels
+        bool isAnom = (row[42] == "1");
+        isAnomaly.push_back(isAnom);
+        
+        // Extract all 8 features for each sample
+        duration.push_back(stod(row[0]));           // duration
+        src_bytes.push_back(stod(row[4]));          // src_bytes
+        dst_bytes.push_back(stod(row[5]));          // dst_bytes
+        wrong_fragment.push_back(stod(row[7]));     // wrong_fragment
+        urgent.push_back(stod(row[8]));             // urgent
+        hot.push_back(stod(row[9]));                // hot
+        num_failed_logins.push_back(stod(row[10])); // num_failed_logins
+        num_compromised.push_back(stod(row[13]));   // num_compromised
     }
 
-    // Print basic dataset information
-    // printBasicInfo(csvData, {}, isAnomaly, 1, "Lightweight LOF - Dataset");
+    // Count and display the natural imbalance
+    size_t normalCount = count(isAnomaly.begin(), isAnomaly.end(), false);
+    size_t anomalyCount = count(isAnomaly.begin(), isAnomaly.end(), true);
+    double anomalyPercentage = (double)anomalyCount / isAnomaly.size() * 100.0;
+    
+    cout << "\nUsing imbalanced dataset (natural distribution):" << endl;
+    cout << "  Total samples: " << isAnomaly.size() << endl;
+    cout << "  Normal samples: " << normalCount << " (" << (100.0 - anomalyPercentage) << "%)" << endl;
+    cout << "  Anomaly samples: " << anomalyCount << " (" << anomalyPercentage << "%)" << endl;
+    cout << "  Class imbalance ratio: " << (double)anomalyCount / normalCount << ":1 (anomaly:normal)" << endl;
 
     cout << "\nUsing lightweight configuration:" << endl;
-    cout << "  Samples: " << actualSamples << " (reduced from " << csvData.size() << ")" << endl;
-    cout << "  Features: 5 (reduced from 19)" << endl;
+    cout << "  Samples: " << isAnomaly.size() << " (imbalanced from " << csvData.size() << ")" << endl;
+    cout << "  Features: 8 (duration, src_bytes, dst_bytes, wrong_fragment, urgent, hot, num_failed_logins, num_compromised)" << endl;
 
     // Normalize features
     cout << "\nNormalizing features..." << endl;
-    vector<double> normMeans = normalizeFeature(means);
-    vector<double> normVars = normalizeFeature(vars);
-    vector<double> normStds = normalizeFeature(stds);
-    vector<double> normKurts = normalizeFeature(kurts);
-    vector<double> normSkews = normalizeFeature(skews);
+    vector<double> normDuration = normalizeFeature(duration);
+    vector<double> normSrcBytes = normalizeFeature(src_bytes);
+    vector<double> normDstBytes = normalizeFeature(dst_bytes);
+    vector<double> normWrongFragment = normalizeFeature(wrong_fragment);
+    vector<double> normUrgent = normalizeFeature(urgent);
+    vector<double> normHot = normalizeFeature(hot);
+    vector<double> normNumFailedLogins = normalizeFeature(num_failed_logins);
+    vector<double> normNumCompromised = normalizeFeature(num_compromised);
 
     // Create feature matrix
-    for (size_t i = 0; i < actualSamples; i++)
+    for (size_t i = 0; i < isAnomaly.size(); i++)
     {
         vector<double> sample = {
-            normMeans[i], normVars[i], normStds[i], normKurts[i], normSkews[i]};
+            normDuration[i], normSrcBytes[i], normDstBytes[i], normWrongFragment[i],
+            normUrgent[i], normHot[i], normNumFailedLogins[i], normNumCompromised[i]};
         features.push_back(sample);
     }
 
@@ -131,13 +150,15 @@ int main()
         }
         avgKDistance /= min(k, (int)distances.size());
 
+        // LOF should give higher scores to anomalies (outliers)
+        // Use inverse distance: closer neighbors = lower anomaly score, farther = higher anomaly score
         anomalyScores.push_back(avgKDistance);
     }
 
     cout << "LOF calculation complete!" << endl;
 
     // Show score analysis
-    printBasicInfo(csvData, anomalyScores, isAnomaly, 1, "Lightweight LOF - Score Analysis");
+    printBasicInfo(csvData, anomalyScores, isAnomaly, 42, "Lightweight LOF - NSL-KDD Score Analysis");
 
     // Analyze score distribution
     double minScore = *min_element(anomalyScores.begin(), anomalyScores.end());
@@ -167,18 +188,17 @@ int main()
     // Evaluate algorithm
     cout << "\n=== Evaluation Results ===" << endl;
 
-    // Resize labels to match the reduced sample size
-    vector<bool> reducedLabels(isAnomaly.begin(), isAnomaly.begin() + actualSamples);
-
-    auto results = evaluateAlgorithm(anomalyScores, reducedLabels, "LightweightLOF", "OPS-SAT", threshold80);
+    // Use the balanced labels that match our reduced sample size
+    auto results = evaluateAlgorithm(anomalyScores, isAnomaly, "LightweightLOF", "NSL-KDD", threshold80);
 
     cout << "\n=== Lightweight Algorithm Summary ===" << endl;
     cout << "Optimizations applied:" << endl;
-    cout << "  - Reduced dataset size: " << csvData.size() << " -> " << actualSamples << " samples" << endl;
-    cout << "  - Reduced features: 19 -> 5 features" << endl;
+    cout << "  - Reduced dataset size: " << csvData.size() << " -> " << isAnomaly.size() << " samples" << endl;
+    cout << "  - Imbalanced dataset: " << (100.0 - anomalyPercentage) << "% normal, " << anomalyPercentage << "% anomaly samples" << endl;
+    cout << "  - Enhanced features: 8 discriminative features" << endl;
     cout << "  - Reduced k-neighbors: 15 -> 5" << endl;
-    cout << "  - Simplified distance calculations" << endl;
-    cout << "This makes the algorithm ~100x faster for simulation!" << endl;
+    cout << "  - Fixed LOF score interpretation (higher score = more anomalous)" << endl;
+    cout << "This demonstrates the impact of class imbalance on anomaly detection!" << endl;
 
     return 0;
 }
