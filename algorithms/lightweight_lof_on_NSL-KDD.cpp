@@ -56,8 +56,7 @@ int main()
     // NSL-KDD has 43 columns: 0-40 are features, 41 is attack type, 42 is anomaly label
     vector<double> duration, src_bytes, dst_bytes, wrong_fragment, urgent, hot, num_failed_logins, num_compromised;
 
-    // First pass: collect all data and separate by class
-    vector<size_t> normalIndices, anomalyIndices;
+    // Process all samples to demonstrate imbalanced dataset effects
     for (size_t idx = 0; idx < actualSamples && idx < csvData.size(); idx++)
     {
         const auto &row = csvData[idx];
@@ -66,24 +65,9 @@ int main()
 
         // Last column (index 42) contains anomaly labels
         bool isAnom = (row[42] == "1");
-        if (isAnom) {
-            anomalyIndices.push_back(idx);
-        } else {
-            normalIndices.push_back(idx);
-        }
-    }
-
-    // Balance the dataset by taking equal samples from each class
-    size_t samplesPerClass = min(min(normalIndices.size(), anomalyIndices.size()), actualSamples/2);
-    cout << "\nBalancing dataset: " << samplesPerClass << " normal + " << samplesPerClass << " anomaly samples" << endl;
-    cout << "Original distribution: " << normalIndices.size() << " normal, " << anomalyIndices.size() << " anomaly" << endl;
-
-    // Second pass: create balanced dataset with better features
-    for (size_t i = 0; i < samplesPerClass; i++) {
-        // Add normal samples
-        size_t idx = normalIndices[i];
-        const auto &row = csvData[idx];
-        isAnomaly.push_back(false);
+        isAnomaly.push_back(isAnom);
+        
+        // Extract all 8 features for each sample
         duration.push_back(stod(row[0]));           // duration
         src_bytes.push_back(stod(row[4]));          // src_bytes
         dst_bytes.push_back(stod(row[5]));          // dst_bytes
@@ -92,23 +76,21 @@ int main()
         hot.push_back(stod(row[9]));                // hot
         num_failed_logins.push_back(stod(row[10])); // num_failed_logins
         num_compromised.push_back(stod(row[13]));   // num_compromised
-        
-        // Add anomaly samples
-        idx = anomalyIndices[i];
-        const auto &row2 = csvData[idx];
-        isAnomaly.push_back(true);
-        duration.push_back(stod(row2[0]));           // duration
-        src_bytes.push_back(stod(row2[4]));          // src_bytes
-        dst_bytes.push_back(stod(row2[5]));          // dst_bytes
-        wrong_fragment.push_back(stod(row2[7]));     // wrong_fragment
-        urgent.push_back(stod(row2[8]));             // urgent
-        hot.push_back(stod(row2[9]));                // hot
-        num_failed_logins.push_back(stod(row2[10])); // num_failed_logins
-        num_compromised.push_back(stod(row2[13]));   // num_compromised
     }
 
+    // Count and display the natural imbalance
+    size_t normalCount = count(isAnomaly.begin(), isAnomaly.end(), false);
+    size_t anomalyCount = count(isAnomaly.begin(), isAnomaly.end(), true);
+    double anomalyPercentage = (double)anomalyCount / isAnomaly.size() * 100.0;
+    
+    cout << "\nUsing imbalanced dataset (natural distribution):" << endl;
+    cout << "  Total samples: " << isAnomaly.size() << endl;
+    cout << "  Normal samples: " << normalCount << " (" << (100.0 - anomalyPercentage) << "%)" << endl;
+    cout << "  Anomaly samples: " << anomalyCount << " (" << anomalyPercentage << "%)" << endl;
+    cout << "  Class imbalance ratio: " << (double)anomalyCount / normalCount << ":1 (anomaly:normal)" << endl;
+
     cout << "\nUsing lightweight configuration:" << endl;
-    cout << "  Samples: " << isAnomaly.size() << " (balanced from " << csvData.size() << ")" << endl;
+    cout << "  Samples: " << isAnomaly.size() << " (imbalanced from " << csvData.size() << ")" << endl;
     cout << "  Features: 8 (duration, src_bytes, dst_bytes, wrong_fragment, urgent, hot, num_failed_logins, num_compromised)" << endl;
 
     // Normalize features
@@ -170,8 +152,7 @@ int main()
 
         // LOF should give higher scores to anomalies (outliers)
         // Use inverse distance: closer neighbors = lower anomaly score, farther = higher anomaly score
-        double anomalyScore = 1.0 / (avgKDistance + 1e-8); // Add small epsilon to avoid division by zero
-        anomalyScores.push_back(anomalyScore);
+        anomalyScores.push_back(avgKDistance);
     }
 
     cout << "LOF calculation complete!" << endl;
@@ -213,11 +194,11 @@ int main()
     cout << "\n=== Lightweight Algorithm Summary ===" << endl;
     cout << "Optimizations applied:" << endl;
     cout << "  - Reduced dataset size: " << csvData.size() << " -> " << isAnomaly.size() << " samples" << endl;
-    cout << "  - Balanced dataset: 50% normal, 50% anomaly samples" << endl;
+    cout << "  - Imbalanced dataset: " << (100.0 - anomalyPercentage) << "% normal, " << anomalyPercentage << "% anomaly samples" << endl;
     cout << "  - Enhanced features: 8 discriminative features" << endl;
     cout << "  - Reduced k-neighbors: 15 -> 5" << endl;
     cout << "  - Fixed LOF score interpretation (higher score = more anomalous)" << endl;
-    cout << "This makes the algorithm ~100x faster for simulation!" << endl;
+    cout << "This demonstrates the impact of class imbalance on anomaly detection!" << endl;
 
     return 0;
 }
