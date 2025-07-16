@@ -425,54 +425,7 @@ void printEvaluationResults(const map<string, double>& results, bool showPercent
     cout << "=======================================\n";
 }
 
-/**
- * Read a CSV file and return its contents as a vector of vectors of strings.
- * Usable but unnecessary at the moment because of ARM compilation of CSV files.
- * 
- * @param headerRow Whether the CSV has a header row to skip
- * @param filename Name of the CSV file to read
- * @return Vector of rows, each row is a vector of strings (cells)
- */
 
-vector<vector<string>> readCSV(bool headerRow, const string& filename) { //const reference
-    vector<vector<string>> data; //initialization of data
-    ifstream file(filename); //define input file stream
-    
-    if (!file.is_open()) {
-        cerr << "Error: Could not open file " << filename << endl;
-        return data;
-    }
-
-    
-    string line; //string to hold each line
-    if(headerRow){
-        getline(file, line); //skip header line
-    }
- 
-    while (getline(file, line)) { //while there are still lines in file
-        vector<string> row; //creates new row vector
-        stringstream ss(line); //string stream to parse current line
-        string cell;//variable to hold each cell
-        
-        while (getline(ss, cell, ',')) {//loop through each cell in the current line stream
-            row.push_back(cell);//add cell to row vector
-        }
-        
-        if (!row.empty()) {
-            data.push_back(row);//add row to data vector
-        }
-    }
-    
-    file.close();
-    if (data.empty()) {
-        cerr << "Warning: No data found in file " << filename << endl;
-    }
-    else {
-        cout << "Successfully read " << data.size() << " samples from " << filename << endl;
-    }
-
-    return data;
-}
 
 #include "dataset_array.cpp"  // Include the generated array
 

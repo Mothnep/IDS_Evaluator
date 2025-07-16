@@ -97,15 +97,6 @@ void printEvaluationResults(
     bool showPercentages = true);
 
 /**
- * Read a CSV file and return its contents as a vector of vectors of strings.
- *
- * @param headerRow Whether the first row contains headers
- * @param filename Name of the CSV file to read
- * @return Vector of string vectors representing the CSV rows
- */
-vector<vector<string>> readCSV(bool headerRow, const string& filename);
-
-/**
  * Read embedded dataset and return its contents as a vector of vectors of strings.
  * This is a drop-in replacement for readCSV that uses embedded C++ arrays.
  * 
