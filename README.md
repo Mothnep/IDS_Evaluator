@@ -9,9 +9,9 @@ IDS_Evaluator/
 ├── algorithms/           # Your detection algorithms (.cpp files)
 │   ├── exe/              # Compiled algorithm executables
 │   │   └── ARM/          # ARM cross-compiled binaries
-│   ├── results/          # Algorithm evaluation results and ROC plots
+│   ├── results/          # Algorithm evaluation results
 │   └── ROC_CSV/          # ROC curve data points
-├── datasets/             # Test datasets 
+├── datasets/             # Datasets 
 │   ├── NSL-KDD/          # NSL-KDD network intrusion dataset
 │   └── OPS-SAT-AD/       # OPS-SAT anomaly detection dataset
 ├── helper/               # Helper functions and utilities
@@ -21,17 +21,14 @@ IDS_Evaluator/
 │   ├── csv_to_cpp_array.py  # CSV to C++ array converter
 │   └── plot_roc_curve.py     # ROC curve plotting utility
 ├── lib/                  # External libraries
-│   ├── dlib-19.24/       # dlib machine learning library
-│   ├── isotree/          # Isolation Forest implementation
-│   └── mlpack-4.3.0/     # MLPack machine learning library
 ├── scripts/              # Evaluation and compilation scripts
 │   ├── compile_binary.sh     # ARM cross-compilation script
 │   ├── run_evaluation.sh     # Single algorithm evaluation
 │   └── run_full_evaluation.sh # Full evaluation with simulation
 ├── simulators/           # Simulation environment
 │   ├── gem5_latest/      # gem5 simulator Docker environment
-│   ├── mcpat/            # McPAT power analysis tool
-│   ├── parser/           # Results parsing utilities
+│   ├── mcpat/            # McPAT Docker environment
+│   ├── parser/           # gem5 results parsing utilities
 │   └── simulator_configs/    # Processor configuration files
 │       └── gem5/
 │           ├── ARM/      # ARM processor configurations
@@ -41,7 +38,7 @@ IDS_Evaluator/
 
 # Processor Architecture Configuration
 
-Before implementing your algorithm, you need to configure the target processor architecture for simulation. The tool supports various processor configurations through JSON files located in `simulators/simulator_configs/gem5/`.
+Before implementing your algorithm, you need to configure the target processor architecture for simulation. The tool supports various processor configurations through JSON files located in `simulators/simulator_configs/gem5/ARM/simulation_config.json`.
 
 ## Available Configurations
 
@@ -50,9 +47,6 @@ The tool includes pre-configured processor architectures:
 ### ARM Configurations (`simulators/simulator_configs/gem5/ARM/simulation_config.json`)
 - **default**: Basic ARM configuration with 4GHz clock, 512MB DDR3 memory, simple cache hierarchy
 - **cortex_a72**: ARM Cortex-A72 inspired configuration with 1.8GHz clock, 2GB DDR4 memory, realistic cache sizes
-
-### X86 Configurations (`simulators/simulator_configs/gem5/X86/`)
-- Additional X86 processor configurations (if available)
 
 ## Selecting a Configuration
 
