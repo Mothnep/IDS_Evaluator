@@ -9,6 +9,7 @@ IDS_Evaluator/
 ├── algorithms/           # Your detection algorithms (.cpp files)
 │   ├── exe/              # Compiled algorithm executables
 │   │   └── ARM/          # ARM cross-compiled binaries
+|   ├── models/           # Training models
 │   ├── results/          # Algorithm evaluation results
 │   └── ROC_CSV/          # ROC curve data points
 ├── datasets/             # Datasets 
