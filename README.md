@@ -1,5 +1,5 @@
 # Overview
-The IDS Evaluation Tool is a comprehensive framework for developing, testing, and evaluating anomaly detection algorithms for Intrusion Detection Systems (IDS). This tool provides a standardized environment to implement, compile, and evaluate the performance of different detection algorithms on various datasets, with support for ARM cross-compilation and gem5 simulation for performance analysis.
+The IDS Evaluation Tool is a comprehensive framework for developing, testing, and evaluating anomaly detection algorithms for Intrusion Detection Systems (IDS). This tool provides a standardized environment to implement, compile, evaluate the performance of different detection algorithms on various datasets and benchmark processor architecture performance for the given algorithm.
 
 # File Structure
 The IDS Evaluation Tool follows a specific directory structure to organize algorithms, datasets, helper functions, simulators, and results. Below is an overview of the file structure:
@@ -15,12 +15,12 @@ IDS_Evaluator/
 │   ├── NSL-KDD/          # NSL-KDD network intrusion dataset
 │   └── OPS-SAT-AD/       # OPS-SAT anomaly detection dataset
 ├── helper/               # Helper functions and utilities
-│   ├── helper_functions.cpp  # Common evaluation functions
-│   ├── helper_functions.h    # Function declarations
+│   ├── helper_functions.cpp  # Common evaluation and helper functions
+│   ├── helper_functions.h   
 │   ├── dataset_array.cpp     # Embedded dataset (auto-generated)
 │   ├── csv_to_cpp_array.py  # CSV to C++ array converter
 │   └── plot_roc_curve.py     # ROC curve plotting utility
-├── lib/                  # External libraries
+├── lib/                  # External coding libraries
 ├── scripts/              # Evaluation and compilation scripts
 │   ├── compile_binary.sh     # ARM cross-compilation script
 │   ├── run_evaluation.sh     # Single algorithm evaluation
@@ -51,7 +51,7 @@ The tool includes pre-configured processor architectures:
 ## Selecting a Configuration
 
 To use a specific configuration:
-1. Navigate to the appropriate architecture folder (ARM or X86)
+1. Navigate to the appropriate architecture folder
 2. Edit the `simulation_config.json` file
 3. Choose the desired configuration by name (e.g., "default" or "cortex_a72")
 4. The binary path will be automatically set during compilation
@@ -117,13 +117,8 @@ You can create custom processor configurations by adding new entries to the `sim
 }
 ```
 
-### Configuration Parameters:
-- **system.clock_domain.clock**: CPU clock frequency
-- **system.clock_domain.voltage_domain.voltage**: Operating voltage
-- **cpu.type**: CPU model (O3CPU for out-of-order, MinorCPU for in-order)
-- **cpu.branch_prediction**: Branch predictor settings
-- **memory.dram**: Memory type and configuration
-- **cache_hierarchy**: L1 and L2 cache specifications (size, associativity, latencies)
+## Configuration Parameters:
+All the tweakable parameters can be found in the README in the 'Simulator_configs' folder.
 
 # Dataset Integration
 
@@ -143,13 +138,14 @@ When implementing your algorithm, use the `readEmbeddedDataset()` function inste
 vector<vector<string>> data = readEmbeddedDataset(true);  // true for header row
 ```
 
-The dataset is automatically converted from CSV to C++ arrays using the `csv_to_cpp_array.py` script during compilation.
+The dataset is automatically converted from CSV to C++ arrays using the `csv_to_cpp_array.py` script during compilation. You DO NOT NEED to provide the name of the dataset file in the code. This will be requested when running the automation script.
 
 # Algorithm Implementation
 
 To implement your detection algorithm, create a new `.cpp` file in the `algorithms/` directory. Your implementation should utilize the provided helper functions for consistent evaluation.
 
 ## Basic Algorithm Template
+An example implementation can be found under `lightweight_lof_on_OPS-SAT.cpp`. In order to run the whole evaluation you will NEED to use the "readEmbeddedDataset" and the "evaluateAlgorithm" functions. A basic structure looks something like this:
 
 ```cpp
 // filepath: algorithms/YourAlgorithm_on_Dataset.cpp
@@ -265,83 +261,6 @@ For rapid testing and algorithm-specific results without processor simulation:
 ./scripts/run_evaluation.sh your_algorithm.cpp --lib lib/isotree/isotree.cpp
 ```
 
-### What This Script Does:
-1. Converts CSV dataset to embedded C++ arrays
-2. Compiles your algorithm with specified libraries
-3. Executes the algorithm
-4. Generates ROC curves and evaluation metrics
-5. Saves results to `algorithms/results/` and `algorithms/ROC_CSV/`
-
-## Full Evaluation with Simulation (`run_full_evaluation.sh`)
-
-For comprehensive evaluation including processor simulation, power analysis, and performance metrics:
-
-```bash
-./scripts/run_full_evaluation.sh YourAlgorithm_on_Dataset.cpp
-```
-
-### Full Evaluation Process:
-1. **Dataset Preparation**: Converts CSV to embedded C++ arrays
-2. **X86 Compilation**: Compiles and runs algorithm for baseline results
-3. **ARM Cross-compilation**: Creates ARM binary for simulation
-4. **gem5 Simulation**: Runs algorithm in gem5 simulator with configured processor
-5. **McPAT Analysis**: Analyzes power consumption and hardware metrics
-6. **Results Generation**: Creates comprehensive performance reports
-
-### Full Evaluation Outputs:
-- Algorithm performance metrics (ROC curves, AUC, precision, recall)
-- Processor simulation results (cycles, instructions, cache performance)
-- Power consumption analysis
-- Hardware resource utilization reports
-- Comparative performance charts
-
-## ARM Cross-Compilation Testing (`compile_binary.sh`)
-
-To test if your algorithm and dependencies can be successfully compiled for ARM architecture:
-
-```bash
-./scripts/compile_binary.sh
-```
-
-### What This Script Does:
-1. Converts dataset to embedded C++ arrays
-2. Attempts ARM cross-compilation with static linking
-3. Verifies binary compatibility
-4. Reports compilation success/failure
-5. Shows binary information (architecture, size, etc.)
-
-### ARM Compilation Features:
-- **Static linking**: Ensures binary runs in simulation environment
-- **ARM optimization**: Uses appropriate compiler flags for ARM architecture
-- **Dependency inclusion**: Automatically includes required libraries
-- **Binary verification**: Confirms successful cross-compilation
-
-### Troubleshooting ARM Compilation:
-If compilation fails, check:
-- ARM cross-compiler installation: `arm-linux-gnueabi-g++`
-- Library compatibility with ARM architecture
-- Static linking requirements for your dependencies
-
-## Choosing the Right Evaluation Method
-
-**Use `run_evaluation.sh` when:**
-- Quick algorithm testing and debugging
-- Generating ROC curves and basic metrics
-- Iterating on algorithm development
-- No need for processor-specific analysis
-
-**Use `run_full_evaluation.sh` when:**
-- Complete performance characterization needed
-- Evaluating for specific hardware targets
-- Power consumption analysis required
-- Comprehensive reporting for research/publication
-
-**Use `compile_binary.sh` when:**
-- Testing ARM compatibility before full evaluation
-- Debugging compilation issues
-- Verifying cross-compilation setup
-- Quick binary generation for external use
-
 ## Output Files and Results
 
 ### Algorithm Results (`algorithms/results/`):
@@ -358,107 +277,5 @@ If compilation fails, check:
 - Power analysis reports from McPAT
 - Hardware performance visualizations
 
-## Example Workflow
 
-1. **Develop Algorithm**: Create your algorithm in `algorithms/`
-2. **Quick Test**: Use `run_evaluation.sh` for rapid iteration
-3. **ARM Test**: Use `compile_binary.sh` to verify ARM compatibility
-4. **Full Analysis**: Use `run_full_evaluation.sh` for comprehensive evaluation
-5. **Review Results**: Analyze outputs in `algorithms/results/`
-
-# Prerequisites and Setup
-
-## Required Dependencies
-
-### System Requirements:
-- **Linux/Unix environment** (Ubuntu/Debian recommended)
-- **GCC compiler** with C++17 support
-- **Python 3.6+** with pip
-- **ARM cross-compiler**: `arm-linux-gnueabi-g++`
-- **Docker** (for gem5 simulation)
-
-### Python Dependencies:
-The evaluation scripts automatically set up a Python virtual environment and install:
-- `pandas` (for data processing)
-- `matplotlib` (for ROC curve plotting)
-
-### ARM Cross-Compiler Installation:
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi
-
-# Verify installation
-arm-linux-gnueabi-g++ --version
-```
-
-### Docker Setup (for Full Evaluation):
-```bash
-# Install Docker
-sudo apt-get install docker.io
-sudo usermod -aG docker $USER
-
-# Build gem5 image (if not already built)
-cd simulators/gem5_latest
-docker build -t gem5:latest .
-```
-
-## First Time Setup
-
-1. **Clone the repository**
-2. **Install dependencies** (see above)
-3. **Configure processor architecture** in `simulators/simulator_configs/gem5/`
-4. **Test basic functionality**:
-   ```bash
-   # Test compilation
-   ./scripts/compile_binary.sh
-   
-   # Test evaluation
-   ./scripts/run_evaluation.sh algorithms/existing_algorithm.cpp
-   ```
-
-# Best Practices
-
-## Algorithm Development:
-- Use descriptive naming: `AlgorithmName_on_DatasetName.cpp`
-- Include proper error handling in your algorithm
-- Test with `run_evaluation.sh` before full evaluation
-- Document your algorithm's parameters and assumptions
-
-## Performance Optimization:
-- Use embedded datasets to avoid I/O overhead
-- Minimize memory allocations in tight loops
-- Consider ARM-specific optimizations for cross-compilation
-- Profile your algorithm before extensive simulation
-
-## Result Analysis:
-- Compare AUC values across different algorithms
-- Analyze ROC curves for different operating points
-- Review confusion matrices for threshold selection
-- Consider computational complexity alongside accuracy
-
-# Troubleshooting
-
-## Common Issues:
-
-**Compilation Errors:**
-- Ensure all library dependencies are correctly specified
-- Check C++17 compatibility of your code
-- Verify ARM cross-compiler installation
-
-**Runtime Errors:**
-- Check dataset format compatibility
-- Ensure sufficient memory for your algorithm
-- Verify label column index in dataset
-
-**Simulation Issues:**
-- Ensure Docker is properly installed and running
-- Check gem5 image availability
-- Verify ARM binary compatibility
-
-**Permission Errors:**
-- Ensure scripts have execute permissions: `chmod +x scripts/*.sh`
-- Check Docker group membership for simulation
-
-For additional help, refer to the individual script documentation or check the project's issue tracker.
 
